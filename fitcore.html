@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0d12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FitCore">
+<title>FitCore</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<!-- Шрифты с fallback на системные (на случай блокировки в РФ) -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" onerror="this.remove()">
+<style>
+:root {
+  --bg: #0d0d12;
+  --bg2: #13131a;
+  --bg3: #1a1a24;
+  --bg4: #22222e;
+  --accent: #c8f060;
+  --text: #f0f0f0;
+  --text2: #9090a8;
+  --text3: #5a5a72;
+  --r: 16px;
+  /* Fallback если Google Fonts не загрузились */
+  --font-head: 'Syne', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'DM Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);overflow:hidden}
+
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s;will-change:transform}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+.screen.slide-left{transform:translateX(-28%);opacity:0;pointer-events:none}
+
+/* SCROLL */
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:88px}
+.scroll-area::-webkit-scrollbar{display:none}
+
+/* TOPBAR */
+.topbar{padding:52px 20px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar h1{font-family:var(--font-head);font-size:22px;font-weight:700;letter-spacing:-0.02em}
+.back-btn{width:36px;height:36px;background:var(--bg3);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.back-btn svg{width:18px;height:18px;stroke:var(--text);fill:none}
+
+/* BOTTOM NAV — единственный, в #shell */
+#shell-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--bg4);display:flex;padding:8px 0 20px;z-index:200}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 0}
+.nav-btn svg{width:22px;height:22px;stroke:var(--text3);fill:none;transition:stroke .18s}
+.nav-btn span{font-size:10px;color:var(--text3);font-family:var(--font-body);transition:color .18s}
+.nav-btn.active svg{stroke:var(--accent)}
+.nav-btn.active span{color:var(--accent)}
+
+/* HOME */
+.hero{padding:6px 20px 20px}
+.hero-date{font-size:11px;color:var(--text3);font-weight:400;margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}
+.hero-greeting{font-family:var(--font-head);font-size:28px;font-weight:800;line-height:1.1;margin-bottom:4px}
+.hero-greeting em{color:var(--accent);font-style:normal}
+.hero-sub{font-size:13px;color:var(--text2);font-weight:300}
+
+.streak-bar{margin:0 20px 20px;background:var(--bg3);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px}
+.streak-info{flex:1}
+.streak-info p{font-size:13px;font-weight:500}
+.streak-info span{font-size:11px;color:var(--text3)}
+.flame{font-size:26px}
+
+.sec-label{padding:0 20px;margin-bottom:10px;font-family:var(--font-head);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+
+.today-card{margin:0 20px 20px;background:var(--accent);border-radius:var(--r);padding:18px 20px;cursor:pointer;position:relative;overflow:hidden;user-select:none}
+.today-card::before{content:'';position:absolute;right:-20px;top:-20px;width:110px;height:110px;background:rgba(0,0,0,.08);border-radius:50%}
+.today-tag{font-size:10px;font-weight:600;color:rgba(0,0,0,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:5px}
+.today-title{font-family:var(--font-head);font-size:19px;font-weight:800;color:#0d0d12;margin-bottom:3px;line-height:1.2}
+.today-meta{font-size:12px;color:rgba(0,0,0,.5);font-weight:300;margin-bottom:14px}
+.today-start{background:#0d0d12;color:var(--accent);border:none;border-radius:40px;padding:9px 18px;font-family:var(--font-head);font-size:13px;font-weight:700;cursor:pointer}
+
+.prog-cards{display:flex;flex-direction:column;gap:10px;padding:0 20px;margin-bottom:20px}
+.prog-card{background:var(--bg3);border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s;user-select:none}
+.prog-card:active{background:var(--bg4)}
+.prog-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.prog-info{flex:1}
+.prog-title{font-size:14px;font-weight:500;margin-bottom:1px}
+.prog-sub{font-size:11px;color:var(--text3)}
+.prog-badge{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--bg4);color:var(--text2);font-weight:500;white-space:nowrap}
+
+/* PROGRAM SCREEN */
+.prog-hero{padding:6px 20px 18px}
+.prog-hero-tag{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.prog-hero h2{font-family:var(--font-head);font-size:24px;font-weight:800;margin-bottom:5px;line-height:1.1}
+.prog-hero p{font-size:13px;color:var(--text2);font-weight:300;line-height:1.5}
+
+.why-block{margin:0 20px 18px;background:var(--bg3);border-radius:var(--r);padding:14px 16px}
+.why-block h3{font-family:var(--font-head);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px}
+.why-item{display:flex;gap:10px;margin-bottom:8px}
+.why-item:last-child{margin-bottom:0}
+.why-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);margin-top:7px;flex-shrink:0}
+.why-text{font-size:12px;color:var(--text2);line-height:1.5;font-weight:300}
+.why-text strong{color:var(--text);font-weight:500}
+
+.week-tabs{display:flex;gap:7px;padding:0 20px;margin-bottom:14px;overflow-x:auto}
+.week-tabs::-webkit-scrollbar{display:none}
+.week-tab{flex-shrink:0;padding:6px 12px;border-radius:40px;border:1px solid var(--bg4);background:var(--bg3);font-size:11px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;font-family:var(--font-body)}
+.week-tab.active{background:var(--accent);color:#0d0d12;border-color:var(--accent);font-weight:700}
+
+.day-list{padding:0 20px;display:flex;flex-direction:column;gap:8px}
+.day-card{background:var(--bg3);border-radius:var(--r);overflow:hidden;user-select:none}
+.day-card.clickable{cursor:pointer;transition:background .15s}
+.day-card.clickable:active{background:var(--bg4)}
+.day-header{padding:12px 14px;display:flex;align-items:center;gap:10px}
+.day-num{width:34px;height:34px;border-radius:9px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;flex-shrink:0}
+.day-num.done{background:var(--accent);color:#0d0d12}
+.day-num.today{background:rgba(200,240,96,.12);color:var(--accent);border:1px solid rgba(200,240,96,.35)}
+.day-info{flex:1}
+.day-title{font-size:13px;font-weight:500}
+.day-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.day-arrow{color:var(--text3);font-size:16px}
+
+/* WORKOUT SCREEN */
+.workout-hero{padding:6px 20px 18px}
+.workout-hero-tag{font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px}
+.workout-hero h2{font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:3px;line-height:1.15}
+.workout-hero p{font-size:12px;color:var(--text2);font-weight:300;line-height:1.5}
+
+.ex-list{padding:0 20px;display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.ex-card{background:var(--bg3);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:background .15s;user-select:none}
+.ex-card:active{background:var(--bg4)}
+.ex-card-inner{padding:12px 14px;display:flex;gap:12px;align-items:center}
+.ex-num-badge{width:26px;height:26px;border-radius:7px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--text2);flex-shrink:0}
+.ex-details{flex:1}
+.ex-name{font-size:13px;font-weight:500;margin-bottom:2px}
+.ex-params{font-size:11px;color:var(--text3)}
+.ex-muscle-tag{font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(200,240,96,.1);color:var(--accent);font-weight:500;white-space:nowrap}
+
+.start-btn{display:block;margin:0 20px 20px;width:calc(100% - 40px);padding:15px;background:var(--accent);color:#0d0d12;border:none;border-radius:40px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;transition:transform .1s;letter-spacing:.01em}
+.start-btn:active{transform:scale(.97)}
+
+/* EXERCISE DETAIL */
+.ex-detail-hero{padding:6px 20px 16px}
+.ex-detail-title{font-family:var(--font-head);font-size:21px;font-weight:800;margin-bottom:6px;line-height:1.15}
+.ex-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.ex-tag{font-size:10px;padding:3px 9px;border-radius:20px;background:var(--bg3);color:var(--text2)}
+.ex-tag.primary{background:rgba(200,240,96,.1);color:var(--accent)}
+.ex-about{font-size:12px;color:var(--text2);font-weight:300;line-height:1.6}
+
+.ex-anim{margin:0 20px 18px;background:var(--bg3);border-radius:var(--r);height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+.how-to{margin:0 20px 18px}
+.how-to h3{font-family:var(--font-head);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:10px}
+.step-item{display:flex;gap:10px;margin-bottom:10px}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#0d0d12;font-family:var(--font-head);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-text{font-size:12px;color:var(--text2);line-height:1.6;font-weight:300}
+.step-text strong{color:var(--text);font-weight:500}
+
+.mistake-block{margin:0 20px 20px;background:rgba(255,100,80,.05);border:1px solid rgba(255,100,80,.12);border-radius:var(--r);padding:13px 14px}
+.mistake-block h3{font-size:10px;font-weight:700;color:#ff8070;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.mistake-item{font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:300;display:flex;gap:7px;line-height:1.5}
+.mistake-item::before{content:'×';color:#ff8070;font-weight:700;flex-shrink:0}
+
+/* ACTIVE WORKOUT */
+.active-wrap{flex:1;display:flex;flex-direction:column;padding:52px 20px 20px}
+.aw-progress{display:flex;gap:4px;margin-bottom:22px}
+.aw-dot{flex:1;height:3px;border-radius:2px;background:var(--bg4);transition:background .3s}
+.aw-dot.done{background:var(--accent)}
+.aw-dot.current{background:rgba(200,240,96,.4)}
+
+.aw-ex-counter{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.aw-ex-name{font-family:var(--font-head);font-size:24px;font-weight:800;margin-bottom:3px;line-height:1.1}
+.aw-sets-info{font-size:13px;color:var(--text2);margin-bottom:24px;font-weight:300}
+.aw-sets-info span{color:var(--accent);font-weight:500}
+
+.aw-visual{flex:1;display:flex;align-items:center;justify-content:center;min-height:160px}
+.aw-timer-wrap{position:relative;width:190px;height:190px}
+.timer-ring{position:absolute;inset:0}
+.timer-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.timer-big{font-family:var(--font-head);font-size:50px;font-weight:800;line-height:1;color:var(--accent)}
+.timer-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+.aw-hint{font-size:12px;color:var(--text2);text-align:center;margin:16px 0;font-weight:300;line-height:1.5;min-height:36px}
+.aw-controls{display:flex;gap:10px}
+.aw-btn-skip{flex:1;padding:13px;background:var(--bg3);border:none;border-radius:40px;color:var(--text2);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer}
+.aw-btn-next{flex:2;padding:13px;background:var(--accent);border:none;border-radius:40px;color:#0d0d12;font-family:var(--font-head);font-size:14px;font-weight:800;cursor:pointer;transition:transform .1s}
+.aw-btn-next:active{transform:scale(.97)}
+.aw-btn-next:disabled{background:var(--bg4);color:var(--text3);cursor:default}
+
+/* COMPLETION */
+.completion{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.completion-emoji{font-size:60px;margin-bottom:18px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.completion h2{font-family:var(--font-head);font-size:26px;font-weight:800;margin-bottom:7px}
+.completion p{font-size:14px;color:var(--text2);font-weight:300;margin-bottom:28px;line-height:1.6}
+.completion-btn{padding:14px 36px;background:var(--accent);color:#0d0d12;border:none;border-radius:40px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer}
+
+/* PROGRESS */
+.progress-content{padding:0 20px 20px}
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+.p-stat{background:var(--bg3);border-radius:var(--r);padding:14px}
+.p-stat-val{font-family:var(--font-head);font-size:26px;font-weight:800;color:var(--accent);margin-bottom:2px}
+.p-stat-lbl{font-size:11px;color:var(--text3)}
+
+.week-vis{display:flex;gap:6px;margin-bottom:20px}
+.wv-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.wv-circle{width:30px;height:30px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--text3)}
+.wv-circle.done{background:var(--accent);color:#0d0d12;font-weight:700}
+.wv-circle.today{border:1.5px solid var(--accent);color:var(--accent)}
+.wv-day{font-size:9px;color:var(--text3)}
+
+.tip-card{background:var(--bg3);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
+.tip-card h4{font-family:var(--font-head);font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.tip-card p{font-size:12px;color:var(--text2);line-height:1.6;font-weight:300}
+.tip-card p strong{color:var(--text);font-weight:500}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen" id="s-home">
+  <div class="topbar">
+    <h1>FitCore</h1>
+    <div style="font-size:10px;color:var(--text3)">v0.2</div>
+  </div>
+  <div class="scroll-area">
+    <div class="hero">
+      <div class="hero-date" id="home-date"></div>
+      <div class="hero-greeting">Твой кор —<br><em>твоя броня</em></div>
+      <div class="hero-sub">Программа для нижнего живота и боковых</div>
+    </div>
+    <div class="streak-bar">
+      <div class="flame">🔥</div>
+      <div class="streak-info">
+        <p id="streak-txt">0 дней подряд</p>
+        <span>Привычка строится 21 день — не прерывай</span>
+      </div>
+    </div>
+    <div class="sec-label">Сегодня</div>
+    <div class="today-card" id="today-card" onclick="openToday()">
+      <div class="today-tag" id="today-tag">День 1 · Неделя 1</div>
+      <div class="today-title" id="today-title">Нижний кор: активация</div>
+      <div class="today-meta" id="today-meta">5 упражнений · 15 мин</div>
+      <button class="today-start">Начать →</button>
+    </div>
+    <div class="sec-label">Программы</div>
+    <div class="prog-cards">
+      <div class="prog-card" onclick="openProgram('lower')">
+        <div class="prog-icon" style="background:rgba(200,240,96,.1)">🎯</div>
+        <div class="prog-info"><div class="prog-title">Нижний кор</div><div class="prog-sub">Поперечная · Нижние прямые</div></div>
+        <div class="prog-badge">4 нед</div>
+      </div>
+      <div class="prog-card" onclick="openProgram('oblique')">
+        <div class="prog-icon" style="background:rgba(100,180,255,.08)">↔️</div>
+        <div class="prog-info"><div class="prog-title">Боковые мышцы</div><div class="prog-sub">Obliques · Удержание живота</div></div>
+        <div class="prog-badge">4 нед</div>
+      </div>
+      <div class="prog-card" style="opacity:.4;pointer-events:none">
+        <div class="prog-icon" style="background:rgba(255,255,255,.05)">🔒</div>
+        <div class="prog-info"><div class="prog-title">Всё тело</div><div class="prog-sub">Скоро · Мужчины / Женщины / Дети</div></div>
+        <div class="prog-badge">soon</div>
+      </div>
+    </div>
+    <div class="sec-label">Почему это работает</div>
+    <div style="padding:0 20px 20px">
+      <div class="tip-card">
+        <h4>Нижний жир — последний</h4>
+        <p>Там максимальная плотность <strong>бета-рецепторов</strong> — они блокируют сжигание. Тело отдаёт эту зону последней. Нужен дефицит + правильные упражнения + <strong>8–12 недель терпения</strong>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRAM -->
+<div class="screen hidden" id="s-prog">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h1 id="prog-h1">Нижний кор</h1>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+    <div class="prog-hero">
+      <div class="prog-hero-tag" id="prog-tag"></div>
+      <h2 id="prog-title"></h2>
+      <p id="prog-desc"></p>
+    </div>
+    <div class="why-block"><h3>Почему именно эти упражнения</h3><div id="why-items"></div></div>
+    <div class="week-tabs" id="week-tabs"></div>
+    <div class="day-list" id="day-list"></div>
+  </div>
+</div>
+
+<!-- WORKOUT -->
+<div class="screen hidden" id="s-workout">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h1 id="workout-h1">Тренировка</h1>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+    <div class="workout-hero">
+      <div class="workout-hero-tag" id="workout-tag"></div>
+      <h2 id="workout-title"></h2>
+      <p id="workout-desc"></p>
+    </div>
+    <div class="sec-label">Упражнения</div>
+    <div class="ex-list" id="ex-list"></div>
+    <button class="start-btn" onclick="startActive()">Начать тренировку</button>
+  </div>
+</div>
+
+<!-- EXERCISE DETAIL -->
+<div class="screen hidden" id="s-exercise">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h1>Упражнение</h1>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+    <div class="ex-detail-hero">
+      <div class="ex-detail-title" id="exd-name"></div>
+      <div class="ex-tags" id="exd-tags"></div>
+      <p class="ex-about" id="exd-about"></p>
+    </div>
+    <div class="ex-anim" id="exd-anim">
+      <svg id="body-svg" viewBox="0 0 200 280" width="160" height="224" xmlns="http://www.w3.org/2000/svg">
+        <g fill="var(--bg4)" stroke="none">
+          <circle cx="100" cy="28" r="20"/>
+          <rect x="93" y="46" width="14" height="12" rx="4"/>
+          <rect x="72" y="56" width="56" height="68" rx="8"/>
+          <rect x="38" y="58" width="34" height="14" rx="7"/>
+          <rect x="128" y="58" width="34" height="14" rx="7"/>
+          <rect x="32" y="70" width="16" height="46" rx="8"/>
+          <rect x="152" y="70" width="16" height="46" rx="8"/>
+          <rect x="76" y="122" width="48" height="28" rx="6"/>
+          <rect x="77" y="148" width="22" height="68" rx="8"/>
+          <rect x="101" y="148" width="22" height="68" rx="8"/>
+          <rect x="77" y="210" width="22" height="52" rx="8"/>
+          <rect x="101" y="210" width="22" height="52" rx="8"/>
+        </g>
+        <g id="muscle-hl"></g>
+      </svg>
+    </div>
+    <div class="how-to"><h3>Как выполнять</h3><div id="exd-steps"></div></div>
+    <div class="mistake-block"><h3>Частые ошибки</h3><div id="exd-mistakes"></div></div>
+  </div>
+</div>
+
+<!-- ACTIVE WORKOUT -->
+<div class="screen hidden" id="s-active">
+  <div class="active-wrap">
+    <div class="aw-progress" id="aw-dots"></div>
+    <div class="aw-ex-counter" id="aw-counter"></div>
+    <div class="aw-ex-name" id="aw-name"></div>
+    <div class="aw-sets-info">Подход <span id="aw-set">1</span> из <span id="aw-sets">3</span> · <span id="aw-reps">30 сек</span></div>
+    <div class="aw-visual">
+      <div class="aw-timer-wrap">
+        <svg class="timer-ring" viewBox="0 0 190 190">
+          <circle cx="95" cy="95" r="82" fill="none" stroke="var(--bg3)" stroke-width="6"/>
+          <circle id="t-circle" cx="95" cy="95" r="82" fill="none" stroke="var(--accent)" stroke-width="6"
+            stroke-linecap="round" stroke-dasharray="515" stroke-dashoffset="0"
+            transform="rotate(-90 95 95)" style="transition:stroke-dashoffset 1s linear"/>
+        </svg>
+        <div class="timer-text">
+          <div class="timer-big" id="t-num">—</div>
+          <div class="timer-lbl" id="t-lbl">сек</div>
+        </div>
+      </div>
+    </div>
+    <div class="aw-hint" id="aw-hint"></div>
+    <div class="aw-controls">
+      <button class="aw-btn-skip" id="btn-skip" onclick="skipRest()">Пропустить отдых</button>
+      <button class="aw-btn-next" id="btn-next" onclick="nextStep()">Готово ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETE -->
+<div class="screen hidden" id="s-complete">
+  <div class="completion">
+    <div class="completion-emoji">💪</div>
+    <h2>Готово!</h2>
+    <p id="complete-msg">Тренировка завершена. Возвращайся завтра.</p>
+    <button class="completion-btn" onclick="finishWorkout()">На главную</button>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="screen hidden" id="s-progress">
+  <div class="topbar"><h1>Прогресс</h1></div>
+  <div class="scroll-area">
+    <div class="progress-content">
+      <div class="p-grid">
+        <div class="p-stat"><div class="p-stat-val" id="pp-total">0</div><div class="p-stat-lbl">тренировок</div></div>
+        <div class="p-stat"><div class="p-stat-val" id="pp-streak">0</div><div class="p-stat-lbl">дней подряд</div></div>
+        <div class="p-stat"><div class="p-stat-val" id="pp-week">0/7</div><div class="p-stat-lbl">эта неделя</div></div>
+        <div class="p-stat"><div class="p-stat-val" id="pp-mins">0</div><div class="p-stat-lbl">минут всего</div></div>
+      </div>
+      <div class="sec-label" style="padding:0;margin-bottom:10px">Эта неделя</div>
+      <div class="week-vis" id="week-vis"></div>
+      <div class="sec-label" style="padding:0;margin:18px 0 10px">Советы</div>
+      <div class="tip-card"><h4>Вакуум — каждое утро</h4><p>Делай вакуум <strong>натощак лёжа</strong> — 3–5 минут. Это единственное упражнение, которое работает с <strong>поперечной мышцей напрямую</strong>. Через 4 недели живот держится сам.</p></div>
+      <div class="tip-card"><h4>Питание важнее тренировок</h4><p>Нижний жир уходит только при дефиците. <strong>–300 ккал в день</strong> — безопасный темп. Убери один перекус или уменьши порцию ужина.</p></div>
+      <div class="tip-card"><h4>Фотографируй каждые 2 недели</h4><p>Прогресс незаметен ежедневно, но очевиден на сравнении. <strong>Одно и то же место, одно время, одинаковое освещение.</strong></p></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV — единый для всего приложения -->
+<nav id="shell-nav">
+  <button class="nav-btn active" id="nav-home" onclick="switchTab('home')">
+    <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Главная</span>
+  </button>
+  <button class="nav-btn" id="nav-program" onclick="switchTab('program')">
+    <svg viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    <span>Программы</span>
+  </button>
+  <button class="nav-btn" id="nav-progress" onclick="switchTab('progress')">
+    <svg viewBox="0 0 24 24" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Прогресс</span>
+  </button>
+</nav>
+
+<script>
+// ======= DATA =======
+const EX = {
+  vacuum:{name:"Вакуум лёжа",params:"3 × 30 сек",sets:3,dur:30,isTime:true,muscle:"Поперечная",
+    tags:["поперечная мышца","нижний кор","фундамент"],
+    about:"Главное упражнение программы. Единственное, что напрямую тренирует поперечную мышцу — ту, что держит живот плоским. Скручивания и планки её почти не затрагивают.",
+    steps:[{t:"Лягте на спину, колени согнуты, стопы на полу"},{t:"<strong>Выдохните весь воздух</strong> и максимально втяните живот — пупок к позвоночнику"},{t:"Удерживайте 30 сек, <strong>дышите поверхностно</strong> — живот не отпускать"},{t:"Медленный выдох и расслабление"}],
+    mistakes:["Задержка дыхания — нужно дышать поверхностно","Живот поднимается вверх вместо втягивания","Напрягаете ягодицы — только живот"],zone:"lower"},
+
+  deadbug:{name:"Мёртвый жук",params:"3 × 10 каждой стороной",sets:3,reps:10,isTime:false,muscle:"Нижний кор",
+    tags:["нижний кор","стабилизация","поперечная"],
+    about:"Учит поперечную мышцу стабилизировать позвоночник при движении конечностей — именно этот паттерн нужен для плоского живота в реальной жизни.",
+    steps:[{t:"Лягте на спину, руки вертикально вверх, колени под 90°"},{t:"<strong>Прижмите поясницу к полу</strong> — это важнее всего"},{t:"Одновременно опустите правую руку назад и выпрямите левую ногу"},{t:"Вернитесь в начало <strong>не отрывая поясницу</strong>, повторите другой стороной"}],
+    mistakes:["Поясница отрывается от пола — ключевая ошибка","Слишком быстрый темп — медленно и под контролем","Задержка дыхания"],zone:"lower"},
+
+  legRaise:{name:"Подъём ног лёжа",params:"3 × 12",sets:3,reps:12,isTime:false,muscle:"Нижний кор",
+    tags:["нижние прямые","нижний кор"],
+    about:"Прямая нагрузка на нижние пучки прямой мышцы живота. При правильном выполнении с прижатой поясницей — одно из лучших упражнений для нижнего живота.",
+    steps:[{t:"Лягте на спину, руки вдоль тела или под ягодицы"},{t:"<strong>Прижмите поясницу</strong> к полу и не отрывайте на протяжении всего подхода"},{t:"Медленно поднимите ноги до 90°, так же медленно опустите"},{t:"Не кладите ноги на пол — остановитесь в 3–5 см от него"}],
+    mistakes:["Поясница с прогибом — весь смысл теряется","Слишком быстро — нужна медленная негативная фаза","Помогать руками и раскачиваться"],zone:"lower"},
+
+  hollowBody:{name:"Hollow Body",params:"3 × 20 сек",sets:3,dur:20,isTime:true,muscle:"Весь кор",
+    tags:["нижний кор","изометрия","гимнастика"],
+    about:"Гимнастическое упражнение с максимальным напряжением всего корпуса. Учит держать поперечную мышцу под нагрузкой — именно то, что нужно.",
+    steps:[{t:"Лягте на спину, <strong>сплющьте поясницу</strong> к полу"},{t:"Поднимите голову, плечи и ноги на 15–20 см"},{t:"Руки вытяните над головой или вдоль тела"},{t:"Удерживайте, <strong>поясница прижата</strong> — ни на миллиметр не отрывается"}],
+    mistakes:["Поясница отрывается — полный провал","Ноги слишком высоко — слишком легко","Задержка дыхания"],zone:"lower"},
+
+  sidePlank:{name:"Боковая планка",params:"3 × 25 сек каждой",sets:3,dur:25,isTime:true,muscle:"Косые мышцы",
+    tags:["косые мышцы","боковые","стабилизация"],
+    about:"Изолированная нагрузка на косые мышцы — те, что держат бока и не дают животу вылезать при расслаблении. Без нагрузки на поясницу.",
+    steps:[{t:"Лягте на бок, опора на предплечье и ребро стопы"},{t:"<strong>Поднимите бёдра</strong> — тело прямая линия от головы до пяток"},{t:"Держите, <strong>таз не проваливается</strong>. Тянут за пояс вверх — представьте это"},{t:"25 секунд, потом другой бок"}],
+    mistakes:["Таз провисает — весь смысл теряется","Поворот плеча вперёд или назад","Смотреть вниз вместо вперёд"],zone:"oblique"},
+
+  plankRotation:{name:"Планка с ротацией бедра",params:"3 × 8 каждой",sets:3,reps:8,isTime:false,muscle:"Косые + поперечная",
+    tags:["косые мышцы","динамика","боковые"],
+    about:"Динамическая работа с косыми. Ротация бедра под нагрузкой учит мышцы работать в том режиме, который нужен для удержания живота в реальной жизни.",
+    steps:[{t:"Встаньте в планку на вытянутых руках"},{t:"Удерживая корпус стабильным, <strong>поверните бедро</strong> вправо, почти коснувшись пола"},{t:"Вернитесь и повторите в другую сторону"},{t:"Движение только <strong>в тазу</strong> — плечи стоят на месте"}],
+    mistakes:["Плечи двигаются вместе с тазом","Провисает поясница в планке","Таз опускается слишком низко"],zone:"oblique"},
+
+  bicycle:{name:"Велосипед",params:"3 × 16 (8 на каждую)",sets:3,reps:16,isTime:false,muscle:"Косые + прямые",
+    tags:["косые мышцы","прямые","комплекс"],
+    about:"EMG-исследования показывают: максимальная активация косых мышц среди всех упражнений. Работает только при медленном и правильном выполнении.",
+    steps:[{t:"Лягте на спину, руки за голову, <strong>не тяните за шею</strong>"},{t:"Поднимите плечи и подтяните колено"},{t:"<strong>Медленно</strong> поверните грудную клетку к противоположному колену"},{t:"Ключ: поворачивается <strong>грудная клетка</strong>, а не локоть"}],
+    mistakes:["Тяга за шею — повредите","Слишком быстро — это не кардио","Поворот локтем вместо грудью"],zone:"oblique"},
+
+  sideLegRaise:{name:"Подъём ног на боку",params:"3 × 15 каждой",sets:3,reps:15,isTime:false,muscle:"Боковые стабилизаторы",
+    tags:["боковые","стабилизация"],
+    about:"Работает с квадратной мышцей поясницы и боковыми стабилизаторами — второй линией защиты против выпирающего живота.",
+    steps:[{t:"Лягте на бок, тело прямое, нижняя рука под головой"},{t:"Медленно поднимите верхнюю ногу на 40–45°"},{t:"<strong>Задержите 1 секунду</strong> в верхней точке"},{t:"Медленно опустите. Не кладите ногу между повторами"}],
+    mistakes:["Тело поворачивается — зафиксируйте бёдра","Слишком высоко — болит поясница","Нет задержки в верхней точке"],zone:"oblique"}
+};
+
+const PROGS = {
+  lower:{
+    title:"Нижний кор: ликвидация жира",tag:"4-недельная программа",
+    desc:"Целенаправленная работа с поперечной мышцей, нижними прямыми и стабилизаторами. Результат заметен на 3–4 неделе при соблюдении дефицита калорий.",
+    why:[{t:"<strong>Вакуум</strong> — единственное упражнение, напрямую тренирующее поперечную мышцу."},{t:"<strong>Мёртвый жук</strong> — учит удерживать поясницу при движении конечностей."},{t:"<strong>Hollow Body</strong> — максимальное изометрическое напряжение без осевой нагрузки."}],
+    weeks:[
+      {title:"Неделя 1",days:[
+        {t:"Активация поперечной",ex:["vacuum","deadbug","legRaise"],min:15},
+        {t:"Отдых — прогулка 30 мин",rest:true},
+        {t:"Кор + стабилизация",ex:["vacuum","hollowBody","deadbug"],min:17},
+        {t:"Отдых",rest:true},
+        {t:"Активация × усиление",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
+        {t:"Отдых",rest:true},
+        {t:"Лёгкое повторение",ex:["vacuum","deadbug"],min:12}
+      ]},
+      {title:"Неделя 2",days:[
+        {t:"Полный нижний кор",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
+        {t:"Отдых",rest:true},
+        {t:"Интенсив",ex:["hollowBody","legRaise","deadbug","vacuum"],min:22},
+        {t:"Отдых",rest:true},
+        {t:"Полный цикл",ex:["vacuum","deadbug","legRaise","hollowBody"],min:22},
+        {t:"Отдых",rest:true},
+        {t:"Восстановление",ex:["vacuum","deadbug"],min:12}
+      ]},
+      {title:"Неделя 3",days:[
+        {t:"Нижний кор × 4 сета",ex:["vacuum","deadbug","legRaise","hollowBody"],min:25},
+        {t:"Отдых",rest:true},
+        {t:"Максимум",ex:["hollowBody","legRaise","vacuum","deadbug"],min:25},
+        {t:"Отдых",rest:true},
+        {t:"Полный протокол",ex:["vacuum","hollowBody","deadbug","legRaise"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Лёгкое",ex:["vacuum","deadbug"],min:12}
+      ]},
+      {title:"Неделя 4",days:[
+        {t:"Пиковая нагрузка",ex:["vacuum","hollowBody","legRaise","deadbug"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Финальный интенсив",ex:["hollowBody","vacuum","legRaise","deadbug"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Финал",ex:["vacuum","hollowBody","deadbug","legRaise"],min:30},
+        {t:"Отдых",rest:true},
+        {t:"Замер результата",ex:["vacuum"],min:10}
+      ]}
+    ]
+  },
+  oblique:{
+    title:"Боковые мышцы: стальной каркас",tag:"4-недельная программа",
+    desc:"Прицельная работа с косыми мышцами и боковыми стабилизаторами — они держат живот втянутым в реальной жизни.",
+    why:[{t:"<strong>Боковая планка</strong> — лучшая изоляция косых без нагрузки на поясницу."},{t:"<strong>Велосипед</strong> — наибольшая EMG-активация косых среди всех упражнений."},{t:"<strong>Планка с ротацией</strong> — учит косые работать динамически."}],
+    weeks:[
+      {title:"Неделя 1",days:[
+        {t:"Косые: первый контакт",ex:["sidePlank","bicycle","sideLegRaise"],min:15},
+        {t:"Отдых",rest:true},
+        {t:"Стабилизация",ex:["sidePlank","plankRotation","bicycle"],min:17},
+        {t:"Отдых",rest:true},
+        {t:"Косые × усиление",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:20},
+        {t:"Отдых",rest:true},
+        {t:"Повторение",ex:["sidePlank","bicycle"],min:12}
+      ]},
+      {title:"Неделя 2",days:[
+        {t:"Боковой интенсив",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:20},
+        {t:"Отдых",rest:true},
+        {t:"Косые полный",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:22},
+        {t:"Отдых",rest:true},
+        {t:"Максимум",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:22},
+        {t:"Отдых",rest:true},
+        {t:"Восстановление",ex:["sidePlank","bicycle"],min:12}
+      ]},
+      {title:"Неделя 3",days:[
+        {t:"Боковой протокол",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:25},
+        {t:"Отдых",rest:true},
+        {t:"Полный",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:25},
+        {t:"Отдых",rest:true},
+        {t:"Пик",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Лёгкое",ex:["sidePlank","bicycle"],min:12}
+      ]},
+      {title:"Неделя 4",days:[
+        {t:"Пиковая нагрузка",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Финал",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:28},
+        {t:"Отдых",rest:true},
+        {t:"Итоговый",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:30},
+        {t:"Отдых",rest:true},
+        {t:"Замер",ex:["sidePlank"],min:10}
+      ]}
+    ]
+  }
+};
+
+// ======= STATE =======
+let S = {
+  cur: 's-home',
+  stack: [],
+  prog: 'lower',
+  week: 0,
+  activeEx: [],
+  // Active workout
+  awEx: [], awIdx: 0, awSet: 1, awIsRest: false,
+  awTimer: null, awSec: 0,
+  workoutDone: false,
+  // Persistence
+  completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
+};
+
+// ======= STREAK (правильный расчёт) =======
+function calcStreak() {
+  if (!S.completed.length) return 0;
+  const sorted = [...new Set(S.completed)].sort((a,b) => new Date(b)-new Date(a));
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now()-86400000).toDateString();
+  if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+  let streak = 1;
+  for (let i=1; i<sorted.length; i++) {
+    const prev = new Date(sorted[i-1]);
+    const curr = new Date(sorted[i]);
+    const diff = (prev - curr) / 86400000;
+    if (Math.round(diff) === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// ======= NAVIGATION =======
+function push(id) {
+  const cur = document.getElementById(S.cur);
+  const next = document.getElementById(id);
+  S.stack.push(S.cur);
+  cur.classList.add('slide-left');
+  next.classList.remove('hidden','slide-left');
+  S.cur = id;
+}
+
+function goBack() {
+  if (!S.stack.length) return;
+  stopTimer();
+  const prev = S.stack.pop();
+  document.getElementById(S.cur).classList.add('hidden');
+  document.getElementById(prev).classList.remove('slide-left','hidden');
+  S.cur = prev;
+  showNav(true);
+}
+
+// Показывает/скрывает нижнюю навигацию
+function showNav(show) {
+  document.getElementById('shell-nav').style.display = show ? 'flex' : 'none';
+}
+
+function switchTab(tab) {
+  stopTimer();
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete'].forEach(id => {
+    document.getElementById(id).classList.add('hidden');
+    document.getElementById(id).classList.remove('slide-left');
+  });
+  const map = {home:'s-home', program:'s-prog', progress:'s-progress'};
+  document.getElementById(map[tab]).classList.remove('hidden');
+  S.cur = map[tab];
+  S.stack = [];
+  showNav(true);
+  ['home','program','progress'].forEach(t => {
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='program') { S.week=0; renderProg(); }
+  if (tab==='progress') renderProgress();
+}
+
+// ======= HOME =======
+function initHome() {
+  const D=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+  const M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const n=new Date();
+  document.getElementById('home-date').textContent = `${D[n.getDay()]}, ${n.getDate()} ${M[n.getMonth()]}`;
+  refreshHome();
+}
+
+function refreshHome() {
+  const streak = calcStreak();
+  document.getElementById('streak-txt').textContent = `${streak} ${plurDays(streak)} подряд`;
+  // today workout — всегда lower программа для главной
+  const total = S.completed.filter(d=>d).length;
+  const wIdx = Math.floor(total/7)%4;
+  const dIdx = total%7;
+  const day = PROGS.lower.weeks[wIdx].days[dIdx];
+  document.getElementById('today-tag').textContent = `День ${dIdx+1} · Неделя ${wIdx+1}`;
+  document.getElementById('today-title').textContent = day.t;
+  document.getElementById('today-meta').textContent = day.rest ? 'День отдыха — прогулка 30 мин' : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
+}
+
+function openToday() {
+  const total = S.completed.filter(d=>d).length;
+  const wIdx = Math.floor(total/7)%4;
+  const dIdx = total%7;
+  const day = PROGS.lower.weeks[wIdx].days[dIdx];
+  if (day.rest) { alert('Сегодня день отдыха!\nСходи на прогулку 30 минут — это тоже часть программы.'); return; }
+  S.prog = 'lower';
+  openDay(day, `День ${dIdx+1} · Неделя ${wIdx+1}`);
+}
+
+function plurDays(n) {
+  if (n%10===1 && n%100!==11) return 'день';
+  if ([2,3,4].includes(n%10) && ![12,13,14].includes(n%100)) return 'дня';
+  return 'дней';
+}
+
+// ======= PROGRAM =======
+function openProgram(key) {
+  S.prog = key; S.week = 0;
+  renderProg();
+  push('s-prog');
+  showNav(true);
+}
+
+function renderProg() {
+  const p = PROGS[S.prog];
+  document.getElementById('prog-h1').textContent = S.prog==='lower'?'Нижний кор':'Боковые';
+  document.getElementById('prog-tag').textContent = p.tag;
+  document.getElementById('prog-title').textContent = p.title;
+  document.getElementById('prog-desc').textContent = p.desc;
+  document.getElementById('why-items').innerHTML = p.why.map(w=>`<div class="why-item"><div class="why-dot"></div><div class="why-text">${w.t}</div></div>`).join('');
+  document.getElementById('week-tabs').innerHTML = p.weeks.map((w,i)=>`<button class="week-tab ${i===S.week?'active':''}" onclick="selWeek(${i})">${w.title}</button>`).join('');
+  renderDays();
+}
+
+function selWeek(i) {
+  S.week=i;
+  document.querySelectorAll('.week-tab').forEach((b,idx)=>b.classList.toggle('active',idx===i));
+  renderDays();
+}
+
+function renderDays() {
+  const week = PROGS[S.prog].weeks[S.week];
+  const total = S.completed.filter(d=>d).length;
+  document.getElementById('day-list').innerHTML = week.days.map((d,i)=>{
+    const absIdx = S.week*7+i;
+    const isDone = S.prog==='lower' && absIdx < total;
+    const isToday = S.prog==='lower' && absIdx === total;
+    const nc = isDone?'done':isToday?'today':'';
+    return `<div class="day-card ${d.rest?'':'clickable'}" ${d.rest?'':'onclick="openDayFromProg('+S.week+','+i+')"'}>
+      <div class="day-header">
+        <div class="day-num ${nc}">${isDone?'✓':i+1}</div>
+        <div class="day-info"><div class="day-title">${d.t}</div><div class="day-sub">${d.rest?'День отдыха':`${d.ex?.length||0} упр · ${d.min||15} мин`}</div></div>
+        ${d.rest?'':'<div class="day-arrow">›</div>'}
+      </div></div>`;
+  }).join('');
+}
+
+function openDayFromProg(w,d) {
+  const day = PROGS[S.prog].weeks[w].days[d];
+  if (day.rest) return;
+  openDay(day, `День ${d+1} · Неделя ${w+1}`);
+}
+
+function openDay(day, tag) {
+  S.activeEx = day.ex || [];
+  document.getElementById('workout-tag').textContent = tag;
+  document.getElementById('workout-h1').textContent = day.t;
+  document.getElementById('workout-title').textContent = day.t;
+  document.getElementById('workout-desc').textContent = `${day.ex?.length||0} упражнений · около ${day.min||15} минут`;
+  document.getElementById('ex-list').innerHTML = S.activeEx.map((k,i)=>{
+    const e=EX[k];
+    return `<div class="ex-card" onclick="openEx('${k}')">
+      <div class="ex-card-inner">
+        <div class="ex-num-badge">${i+1}</div>
+        <div class="ex-details"><div class="ex-name">${e.name}</div><div class="ex-params">${e.params}</div></div>
+        <span class="ex-muscle-tag">${e.muscle}</span>
+      </div></div>`;
+  }).join('');
+  push('s-workout');
+  showNav(true);
+}
+
+// ======= EXERCISE DETAIL =======
+function openEx(key) {
+  const e = EX[key];
+  document.getElementById('exd-name').textContent = e.name;
+  document.getElementById('exd-about').textContent = e.about;
+  document.getElementById('exd-tags').innerHTML = e.tags.map((t,i)=>`<span class="ex-tag ${i===0?'primary':''}">${t}</span>`).join('');
+  document.getElementById('exd-steps').innerHTML = e.steps.map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><div class="step-text">${s.t}</div></div>`).join('');
+  document.getElementById('exd-mistakes').innerHTML = e.mistakes.map(m=>`<div class="mistake-item">${m}</div>`).join('');
+  // Мышечная схема
+  const hl = document.getElementById('muscle-hl');
+  hl.innerHTML = e.zone==='lower'
+    ? `<rect x="76" y="92" width="48" height="32" rx="6" fill="var(--accent)" opacity="0.65"/>
+       <rect x="78" y="122" width="44" height="18" rx="5" fill="var(--accent)" opacity="0.4"/>`
+    : `<rect x="58" y="68" width="16" height="54" rx="6" fill="var(--accent)" opacity="0.6"/>
+       <rect x="126" y="68" width="16" height="54" rx="6" fill="var(--accent)" opacity="0.6"/>
+       <rect x="76" y="92" width="48" height="28" rx="5" fill="var(--accent)" opacity="0.2"/>`;
+  push('s-exercise');
+  showNav(true);
+}
+
+// ======= ACTIVE WORKOUT =======
+function startActive() {
+  S.awEx = S.activeEx.map(k=>EX[k]);
+  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.workoutDone=false;
+  push('s-active');
+  showNav(false); // прячем нав во время тренировки
+  renderStep();
+}
+
+function renderStep() {
+  const e = S.awEx[S.awIdx];
+  document.getElementById('aw-counter').textContent = `Упражнение ${S.awIdx+1} из ${S.awEx.length}`;
+  document.getElementById('aw-name').textContent = S.awIsRest ? '⏸ Отдых' : e.name;
+  document.getElementById('aw-set').textContent = S.awSet;
+  document.getElementById('aw-sets').textContent = e.sets;
+  document.getElementById('aw-reps').textContent = e.isTime ? `${S.awIsRest?20:e.dur} сек` : (S.awIsRest?'20 сек':`${e.reps} повт`);
+  document.getElementById('aw-hint').textContent = S.awIsRest
+    ? 'Дышите спокойно. Живот расслаблен.'
+    : e.steps[0].t.replace(/<[^>]+>/g,'');
+
+  // Прогресс-точки
+  document.getElementById('aw-dots').innerHTML = S.awEx.map((_,i)=>
+    `<div class="aw-dot ${i<S.awIdx?'done':i===S.awIdx?'current':''}"></div>`).join('');
+
+  const btnNext = document.getElementById('btn-next');
+  const btnSkip = document.getElementById('btn-skip');
+
+  if (S.awIsRest) {
+    btnNext.textContent = 'Начать подход ›';
+    btnNext.disabled = false;
+    btnSkip.style.display = 'block';
+    startTimer(20, true);
+  } else if (e.isTime) {
+    btnNext.textContent = '⏩ Пропустить';
+    btnNext.disabled = false;
+    btnSkip.style.display = 'none';
+    startTimer(e.dur, false);
+  } else {
+    btnNext.textContent = 'Готово ✓';
+    btnNext.disabled = false;
+    btnSkip.style.display = 'none';
+    stopTimer();
+    document.getElementById('t-num').textContent = e.reps;
+    document.getElementById('t-lbl').textContent = 'повторений';
+    document.getElementById('t-circle').style.strokeDashoffset = '0';
+  }
+}
+
+function startTimer(sec, autoNext) {
+  stopTimer();
+  let total = sec;
+  S.awSec = sec;
+  updateTimer(sec, total);
+  S.awTimer = setInterval(()=>{
+    S.awSec--;
+    updateTimer(S.awSec, total);
+    if (S.awSec <= 0) {
+      stopTimer();
+      if (autoNext) { S.awIsRest=false; renderStep(); }
+      // для isTime — просто разблокируем кнопку, уже разблокирована
+    }
+  },1000);
+}
+
+function updateTimer(cur, total) {
+  document.getElementById('t-num').textContent = cur > 0 ? cur : '0';
+  document.getElementById('t-lbl').textContent = 'секунд';
+  const C=515, offset = C*(1-Math.max(cur,0)/total);
+  document.getElementById('t-circle').style.strokeDashoffset = offset;
+}
+
+function stopTimer() { if (S.awTimer) { clearInterval(S.awTimer); S.awTimer=null; } }
+
+function skipRest() {
+  if (!S.awIsRest) return;
+  stopTimer();
+  S.awIsRest=false;
+  renderStep();
+}
+
+function nextStep() {
+  const e = S.awEx[S.awIdx];
+  stopTimer();
+  if (S.awIsRest) { S.awIsRest=false; renderStep(); return; }
+  // Ещё подходы?
+  if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
+  // Следующее упражнение
+  S.awIdx++; S.awSet=1;
+  if (S.awIdx >= S.awEx.length) { finishActive(); return; }
+  S.awIsRest=true;
+  renderStep();
+}
+
+function finishActive() {
+  if (S.workoutDone) return; // guard от двойного вызова
+  S.workoutDone=true;
+  stopTimer();
+  const today = new Date().toDateString();
+  // Не дублируем если уже записан сегодня
+  if (!S.completed.includes(today)) {
+    S.completed.push(today);
+    localStorage.setItem('fc_done', JSON.stringify(S.completed));
+  }
+  const msgs=[
+    "Поперечная мышца получила нагрузку.\nВозвращайся завтра.",
+    "Отличная работа. Косые благодарят.\nПродолжай без пропусков.",
+    "Тренировка в копилке.\n+1 к стальному кору."
+  ];
+  document.getElementById('complete-msg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById(S.cur).classList.add('slide-left');
+  const comp = document.getElementById('s-complete');
+  comp.classList.remove('hidden','slide-left');
+  S.stack.push(S.cur);
+  S.cur='s-complete';
+  showNav(false);
+}
+
+function finishWorkout() {
+  stopTimer();
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete'].forEach(id=>{
+    document.getElementById(id).classList.add('hidden');
+    document.getElementById(id).classList.remove('slide-left');
+  });
+  document.getElementById('s-home').classList.remove('hidden');
+  S.cur='s-home'; S.stack=[];
+  showNav(true);
+  document.getElementById('nav-home').classList.add('active');
+  document.getElementById('nav-program').classList.remove('active');
+  document.getElementById('nav-progress').classList.remove('active');
+  refreshHome();
+}
+
+// ======= PROGRESS =======
+function renderProgress() {
+  const total = S.completed.filter(d=>d).length;
+  const streak = calcStreak();
+  document.getElementById('pp-total').textContent = total;
+  document.getElementById('pp-streak').textContent = streak;
+  // Тренировки за эту календарную неделю
+  const weekStart = new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay()+1); weekStart.setHours(0,0,0,0);
+  const thisWeek = S.completed.filter(d=>new Date(d)>=weekStart).length;
+  document.getElementById('pp-week').textContent = `${Math.min(thisWeek,7)}/7`;
+  document.getElementById('pp-mins').textContent = total*17;
+  const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  // Показываем текущую неделю (Пн–Вс)
+  document.getElementById('week-vis').innerHTML = days.map((d,i)=>{
+    const date = new Date(weekStart); date.setDate(weekStart.getDate()+i);
+    const ds = date.toDateString();
+    const isDone = S.completed.includes(ds);
+    const isToday = ds===new Date().toDateString();
+    return `<div class="wv-item"><div class="wv-circle ${isDone?'done':isToday?'today':''}">${isDone?'✓':d[0]}</div><div class="wv-day">${d}</div></div>`;
+  }).join('');
+}
+
+// ======= SERVICE WORKER =======
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+// ======= INIT =======
+initHome();
+</script>
+</body>
+</html>
