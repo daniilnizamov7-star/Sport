@@ -241,20 +241,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     </div>
     <div class="sec-label">Программы</div>
     <div class="prog-cards">
-      <div class="prog-card" onclick="openProgram('lower')">
-        <div class="prog-icon" style="background:rgba(200,240,96,.1)">🎯</div>
-        <div class="prog-info"><div class="prog-title">Нижний кор</div><div class="prog-sub">Поперечная · Нижние прямые</div></div>
-        <div class="prog-badge">4 нед</div>
-      </div>
-      <div class="prog-card" onclick="openProgram('oblique')">
-        <div class="prog-icon" style="background:rgba(100,180,255,.08)">↔️</div>
-        <div class="prog-info"><div class="prog-title">Боковые мышцы</div><div class="prog-sub">Obliques · Удержание живота</div></div>
-        <div class="prog-badge">4 нед</div>
+      <div class="prog-card" onclick="openProgram('main')">
+        <div class="prog-icon" style="background:rgba(200,240,96,.1)">📋</div>
+        <div class="prog-info"><div class="prog-title">Кор: 8 недель</div><div class="prog-sub">Нижний живот + боковые · Всё включено</div></div>
+        <div class="prog-badge">8 нед</div>
       </div>
       <div class="prog-card" onclick="openNutrition()">
         <div class="prog-icon" style="background:rgba(240,160,96,.1)">🥗</div>
         <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · Дефицит · Кубики</div></div>
         <div class="prog-badge">калькулятор</div>
+      </div>
+      <div class="prog-card" onclick="openProgram('back')">
+        <div class="prog-icon" style="background:rgba(96,180,255,.08)">🧍</div>
+        <div class="prog-info"><div class="prog-title">Спина и осанка</div><div class="prog-sub">Параллельно с основной · 15 мин</div></div>
+        <div class="prog-badge">4 нед</div>
       </div>
       <div class="prog-card" style="opacity:.4;pointer-events:none">
         <div class="prog-icon" style="background:rgba(255,255,255,.05)">🔒</div>
@@ -490,98 +490,190 @@ const EX = {
     about:"Зажатые сгибатели тянут таз вперёд — живот визуально выпячивается даже при сильных мышцах. Расслабил сгибатели — живот подтянулся.",
     steps:[{t:"Полувыпад: переднее колено над стопой, заднее колено на полу"},{t:"<strong>Подай таз вперёд и вниз</strong> — не прогибая поясницу"},{t:"Почувствуй растяжение в передней части заднего бедра"},{t:"Дышите спокойно 30 секунд, смените ногу"}],
     mistakes:["Прогиб в пояснице — нейтральный таз","Нет ощущения растяжки — подай таз сильнее","Меньше 30 секунд — нужно время"],
-    zone:"lower"}
+    zone:"lower"},
+  catCow:{name:"Кошка-корова",params:"2 × 10 циклов",sets:2,reps:10,isTime:false,muscle:"Позвоночник",
+    tags:["позвоночник","разминка","осанка"],
+    about:"Мобилизация всего позвоночника. Снимает зажим после стоячей/сидячей работы, восстанавливает нейтральное положение. Обязательно перед всеми упражнениями на спину.",
+    steps:[{t:"Встаньте на четвереньки — запястья под плечами, колени под бёдрами"},{t:"Вдох: прогнитесь — живот вниз, голова и копчик вверх (корова)"},{t:"Выдох: округлите спину максимально — голова и копчик вниз (кошка)"},{t:"Медленно, плавно, <strong>дышите в ритм движению</strong>"}],
+    mistakes:["Движение только в пояснице — двигается весь позвоночник","Слишком быстро — нужно чувствовать каждый отдел","Задержка дыхания"],
+    zone:"back"},
+  birdDog:{name:"Птица-собака",params:"3 × 8 каждой стороной",sets:3,reps:8,isTime:false,muscle:"Разгибатели спины + кор",
+    tags:["разгибатели спины","стабилизация","осанка"],
+    about:"Лучшее упражнение для одновременной работы разгибателей спины и кора. Учит держать нейтральный позвоночник под нагрузкой — именно это исправляет осанку.",
+    steps:[{t:"Встаньте на четвереньки, спина нейтральная — не прогиб и не горб"},{t:"Одновременно вытяните правую руку вперёд и левую ногу назад"},{t:"<strong>Спина не поворачивается</strong> — бёдра параллельны полу"},{t:"Задержите 2 секунды, медленно вернитесь. Повторите другой стороной"}],
+    mistakes:["Таз поворачивается — главная ошибка","Нога поднимается слишком высоко — прогиб в пояснице","Голова тянется вверх — смотрите в пол"],
+    zone:"back"},
+  gluteBridge:{name:"Ягодичный мост",params:"3 × 15",sets:3,reps:15,isTime:false,muscle:"Ягодицы + поясница",
+    tags:["ягодицы","поясница","осанка"],
+    about:"Слабые ягодицы — главная причина наклона таза вперёд и выпирающего живота. Укрепил ягодицы — таз встал на место — живот подтянулся визуально.",
+    steps:[{t:"Лягте на спину, колени согнуты, стопы на полу на ширине бёдер"},{t:"<strong>Напрягите ягодицы</strong> и поднимите таз — тело прямая линия от плеч до колен"},{t:"Задержите 1–2 секунды в верхней точке — ягодицы сжаты максимально"},{t:"Медленно опустите. Не кладите таз на пол между повторами"}],
+    mistakes:["Поднимаете поясницей, а не ягодицами — почувствуйте ягодицы","Стопы слишком далеко или близко","Нет задержки в верхней точке"],
+    zone:"back"},
+  wallAngel:{name:"Ангел у стены",params:"3 × 10",sets:3,reps:10,isTime:false,muscle:"Трапеция + ромбовидные",
+    tags:["осанка","грудной отдел","трапеция"],
+    about:"Исправляет сутулость напрямую. Прижимает лопатки и раскрывает грудь — противоположное тому что делает стоячая работа с вёдрами. Выглядит просто, но большинство не может сделать правильно с первого раза.",
+    steps:[{t:"Встаньте спиной к стене, <strong>прижмите поясницу, лопатки и затылок</strong>"},{t:"Руки согнуты под 90°, прижаты к стене — локти и запястья касаются стены"},{t:"Медленно поднимайте руки вверх, <strong>не отрывая от стены</strong>"},{t:"Опустите обратно. Если не получается — ничего страшного, это нормально в начале"}],
+    mistakes:["Поясница отрывается от стены — прижмите","Запястья отрываются — уменьши амплитуду","Плечи тянутся вверх к ушам"],
+    zone:"back"},
+  chestStretch:{name:"Растяжка грудных мышц",params:"2 × 30 сек",sets:2,dur:30,isTime:true,muscle:"Грудные мышцы",
+    tags:["растяжка","грудные","осанка"],
+    about:"Зажатые грудные мышцы тянут плечи вперёд — главная причина сутулости. Растянул грудные — плечи ушли назад, грудь раскрылась, осанка улучшилась визуально.",
+    steps:[{t:"Встаньте в дверном проёме, руки на косяках на уровне плеч"},{t:"Медленно шагните вперёд пока не почувствуете растяжение в груди"},{t:"<strong>Грудь вперёд, плечи назад</strong> — не тянитесь шеей"},{t:"Держите 30 секунд, дышите"}],
+    mistakes:["Голова тянется вперёд — она нейтральна","Слишком сильное растяжение — дискомфорт, не боль","Задержка дыхания"],
+    zone:"back"},
+  thoracicRotation:{name:"Ротация грудного отдела",params:"2 × 8 каждой стороной",sets:2,reps:8,isTime:false,muscle:"Грудной отдел",
+    tags:["грудной отдел","мобильность","осанка"],
+    about:"Работа с вёдрами и стоячая работа зажимают грудной отдел. Ротация возвращает подвижность — спина перестаёт быть монолитной и начинает работать правильно.",
+    steps:[{t:"Сядьте на пол, ноги скрещены или лягте на бок с согнутыми коленями"},{t:"Руки за голову. <strong>Медленно поверните грудную клетку</strong> в сторону"},{t:"Поясница не двигается — только грудной отдел"},{t:"Задержите 1–2 секунды, вернитесь. Повторите в другую сторону"}],
+    mistakes:["Поворачивается поясница вместо груди","Локти тянутся вперёд — руки за голову и держать","Слишком быстро"],
+    zone:"back"}
 };
 
 const PROGS = {
-  lower:{
-    title:"Нижний кор: ликвидация жира",tag:"4-недельная программа",
-    desc:"Целенаправленная работа с поперечной мышцей, нижними прямыми и стабилизаторами. Результат заметен на 3–4 неделе при соблюдении дефицита калорий.",
-    why:[{t:"<strong>Вакуум</strong> — единственное упражнение, напрямую тренирующее поперечную мышцу."},{t:"<strong>Мёртвый жук</strong> — учит удерживать поясницу при движении конечностей."},{t:"<strong>Hollow Body</strong> — максимальное изометрическое напряжение без осевой нагрузки."}],
-    weeks:[
-      {title:"Неделя 1",days:[
-        {t:"Активация поперечной",ex:["breathingTVA","vacuum","deadbug","legRaise"],min:17},
-        {t:"Отдых — прогулка 30 мин",rest:true},
-        {t:"Кор + стабилизация",ex:["vacuum","hollowBody","deadbug"],min:17},
-        {t:"Отдых",rest:true},
-        {t:"Активация × усиление",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
-        {t:"Отдых",rest:true},
-        {t:"Лёгкое + растяжка",ex:["vacuum","deadbug","hipFlexorStretch"],min:14}
+  main: {
+    title: "Кор: 8 недель",
+    tag: "Комплексная программа — нижний живот + боковые",
+    desc: "Одна последовательная программа. Нажми Начать — и просто выполняй. Каждый день расписан. Результат виден на 4–5 неделе при соблюдении питания.",
+    why: [
+      {t:"<strong>Недели 1–2</strong> — активация поперечной мышцы и дыхание. Без этого фундамента остальные упражнения работают вполсилы."},
+      {t:"<strong>Недели 3–4</strong> — подключаем боковые мышцы и нижний кор вместе. Начинает формироваться каркас."},
+      {t:"<strong>Недели 5–6</strong> — динамические упражнения, повышение нагрузки. Жир начинает уходить заметно."},
+      {t:"<strong>Недели 7–8</strong> — пиковая нагрузка + растяжка сгибателей. Финальный рельеф."}
+    ],
+    weeks: [
+      // НЕДЕЛЯ 1 — Активация поперечной
+      { title: "Неделя 1", days: [
+        { t: "День 1 — Активация", ex: ["breathingTVA","vacuum","deadbug"], min: 15 },
+        { t: "День 2 — Отдых", rest: true, note: "Прогулка 30 мин — часть программы" },
+        { t: "День 3 — Нижний кор", ex: ["breathingTVA","vacuum","deadbug","legRaise"], min: 18 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Кор + растяжка", ex: ["vacuum","deadbug","legRaise","hipFlexorStretch"], min: 20 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Лёгкое", ex: ["breathingTVA","vacuum"], min: 10 }
       ]},
-      {title:"Неделя 2",days:[
-        {t:"Полный нижний кор",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
-        {t:"Отдых",rest:true},
-        {t:"Интенсив",ex:["hollowBody","legRaise","deadbug","vacuum"],min:22},
-        {t:"Отдых",rest:true},
-        {t:"Полный цикл",ex:["vacuum","deadbug","legRaise","hollowBody"],min:22},
-        {t:"Отдых",rest:true},
-        {t:"Восстановление",ex:["vacuum","deadbug"],min:12}
+      // НЕДЕЛЯ 2 — Фундамент
+      { title: "Неделя 2", days: [
+        { t: "День 1 — Фундамент", ex: ["breathingTVA","vacuum","deadbug","legRaise"], min: 20 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Hollow + кор", ex: ["vacuum","hollowKnees","deadbug","legRaise"], min: 22 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Полный нижний", ex: ["breathingTVA","vacuum","hollowKnees","deadbug","legRaise"], min: 25 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["breathingTVA","hipFlexorStretch"], min: 12 }
       ]},
-      {title:"Неделя 3",days:[
-        {t:"Нижний кор × 4 сета",ex:["vacuum","deadbug","legRaise","hollowBody"],min:25},
-        {t:"Отдых",rest:true},
-        {t:"Максимум",ex:["hollowBody","legRaise","vacuum","deadbug"],min:25},
-        {t:"Отдых",rest:true},
-        {t:"Полный протокол",ex:["vacuum","hollowBody","deadbug","legRaise"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Лёгкое",ex:["vacuum","deadbug"],min:12}
+      // НЕДЕЛЯ 3 — Подключаем боковые
+      { title: "Неделя 3", days: [
+        { t: "День 1 — Нижний кор", ex: ["vacuum","deadbug","legRaise","hollowKnees"], min: 22 },
+        { t: "День 2 — Боковые", ex: ["sidePlank","bicycle","sideLegRaise"], min: 18 },
+        { t: "День 3 — Отдых", rest: true },
+        { t: "День 4 — Нижний кор", ex: ["vacuum","hollowKnees","legRaise","deadbug"], min: 22 },
+        { t: "День 5 — Боковые", ex: ["sidePlank","bicycle","plankRotation"], min: 20 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка + дыхание", ex: ["breathingTVA","hipFlexorStretch"], min: 12 }
       ]},
-      {title:"Неделя 4",days:[
-        {t:"Пиковая нагрузка",ex:["vacuum","hollowBody","legRaise","deadbug"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Финальный интенсив",ex:["hollowBody","vacuum","legRaise","deadbug"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Финал",ex:["vacuum","hollowBody","deadbug","legRaise"],min:30},
-        {t:"Отдых",rest:true},
-        {t:"Замер результата",ex:["vacuum"],min:10}
+      // НЕДЕЛЯ 4 — Кор вместе
+      { title: "Неделя 4", days: [
+        { t: "День 1 — Комбо", ex: ["vacuum","deadbug","sidePlank","bicycle"], min: 24 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Нижний + боковые", ex: ["legRaise","hollowKnees","sidePlank","plankRotation"], min: 25 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Полный кор", ex: ["vacuum","deadbug","legRaise","sidePlank","bicycle"], min: 28 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["hipFlexorStretch","breathingTVA"], min: 12 }
+      ]},
+      // НЕДЕЛЯ 5 — Повышение нагрузки
+      { title: "Неделя 5", days: [
+        { t: "День 1 — Нижний интенсив", ex: ["vacuum","legRaise","hollowKnees","deadbug"], min: 25 },
+        { t: "День 2 — Боковой интенсив", ex: ["sidePlank","bicycle","plankRotation","sideLegRaise"], min: 25 },
+        { t: "День 3 — Отдых", rest: true },
+        { t: "День 4 — Нижний интенсив", ex: ["vacuum","hollowBody","legRaise","deadbug"], min: 27 },
+        { t: "День 5 — Боковой интенсив", ex: ["sidePlank","bicycle","plankRotation","sideLegRaise"], min: 27 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Восстановление", ex: ["breathingTVA","hipFlexorStretch"], min: 12 }
+      ]},
+      // НЕДЕЛЯ 6 — Динамика
+      { title: "Неделя 6", days: [
+        { t: "День 1 — Полный кор", ex: ["vacuum","deadbug","legRaise","sidePlank","bicycle"], min: 28 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Hollow + боковые", ex: ["hollowBody","legRaise","sidePlank","plankRotation","bicycle"], min: 30 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Максимум", ex: ["vacuum","hollowBody","legRaise","deadbug","sidePlank","bicycle"], min: 32 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["hipFlexorStretch","breathingTVA"], min: 12 }
+      ]},
+      // НЕДЕЛЯ 7 — Пиковая
+      { title: "Неделя 7", days: [
+        { t: "День 1 — Пик нижнего", ex: ["vacuum","hollowBody","legRaise","deadbug"], min: 30 },
+        { t: "День 2 — Пик боковых", ex: ["sidePlank","bicycle","plankRotation","sideLegRaise"], min: 30 },
+        { t: "День 3 — Отдых", rest: true },
+        { t: "День 4 — Пик нижнего", ex: ["vacuum","hollowBody","legRaise","deadbug"], min: 30 },
+        { t: "День 5 — Пик боковых", ex: ["sidePlank","bicycle","plankRotation","sideLegRaise"], min: 30 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Восстановление", ex: ["breathingTVA","hipFlexorStretch"], min: 12 }
+      ]},
+      // НЕДЕЛЯ 8 — Финал
+      { title: "Неделя 8", days: [
+        { t: "День 1 — Финал", ex: ["vacuum","hollowBody","legRaise","deadbug","sidePlank","bicycle"], min: 35 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Финал", ex: ["vacuum","hollowBody","legRaise","sidePlank","plankRotation","bicycle"], min: 35 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Финальный максимум", ex: ["vacuum","hollowBody","deadbug","legRaise","sidePlank","bicycle","plankRotation"], min: 40 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Замер результата", ex: ["breathingTVA","vacuum","hipFlexorStretch"], min: 15 }
       ]}
     ]
-  },
-  oblique:{
-    title:"Боковые мышцы: стальной каркас",tag:"4-недельная программа",
-    desc:"Прицельная работа с косыми мышцами и боковыми стабилизаторами — они держат живот втянутым в реальной жизни.",
-    why:[{t:"<strong>Боковая планка</strong> — лучшая изоляция косых без нагрузки на поясницу."},{t:"<strong>Велосипед</strong> — наибольшая EMG-активация косых среди всех упражнений."},{t:"<strong>Планка с ротацией</strong> — учит косые работать динамически."}],
-    weeks:[
-      {title:"Неделя 1",days:[
-        {t:"Косые: первый контакт",ex:["sidePlank","bicycle","sideLegRaise"],min:15},
-        {t:"Отдых",rest:true},
-        {t:"Стабилизация",ex:["sidePlank","plankRotation","bicycle"],min:17},
-        {t:"Отдых",rest:true},
-        {t:"Косые × усиление",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:20},
-        {t:"Отдых",rest:true},
-        {t:"Повторение",ex:["sidePlank","bicycle"],min:12}
+  }
+,
+  back: {
+    title: "Спина и осанка: 4 недели",
+    tag: "Параллельно с основной · 3 раза в неделю · 15 мин",
+    desc: "Исправляет нижний перекрёстный синдром — причину сутулости и выпирающего живота. Делай в дни отдыха от основной программы.",
+    why: [
+      {t:"<strong>Ягодичный мост</strong> — слабые ягодицы наклоняют таз вперёд, живот выпирает визуально."},
+      {t:"<strong>Птица-собака</strong> — разгибатели спины и кор без нагрузки на позвоночник."},
+      {t:"<strong>Ангел у стены</strong> — напрямую исправляет сутулость, раскрывает грудь."},
+      {t:"<strong>Растяжка грудных</strong> — зажатые грудные тянут плечи вперёд. Растянул — плечи ушли назад."}
+    ],
+    weeks: [
+      { title: "Нед 1-2", days: [
+        { t: "Активация спины", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 15 },
+        { t: "Отдых", rest: true },
+        { t: "Осанка и мобильность", ex: ["catCow","wallAngel","thoracicRotation","chestStretch"], min: 15 },
+        { t: "Отдых", rest: true },
+        { t: "Полный комплекс", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 18 },
+        { t: "Отдых", rest: true },
+        { t: "Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
       ]},
-      {title:"Неделя 2",days:[
-        {t:"Боковой интенсив",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:20},
-        {t:"Отдых",rest:true},
-        {t:"Косые полный",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:22},
-        {t:"Отдых",rest:true},
-        {t:"Максимум",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:22},
-        {t:"Отдых",rest:true},
-        {t:"Восстановление",ex:["sidePlank","bicycle"],min:12}
+      { title: "Нед 3-4", days: [
+        { t: "Спина интенсив", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 20 },
+        { t: "Отдых", rest: true },
+        { t: "Осанка полная", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 22 },
+        { t: "Отдых", rest: true },
+        { t: "Максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 25 },
+        { t: "Отдых", rest: true },
+        { t: "Растяжка финал", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
       ]},
-      {title:"Неделя 3",days:[
-        {t:"Боковой протокол",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:25},
-        {t:"Отдых",rest:true},
-        {t:"Полный",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:25},
-        {t:"Отдых",rest:true},
-        {t:"Пик",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Лёгкое",ex:["sidePlank","bicycle"],min:12}
+      { title: "Нед 1-2 (повтор)", days: [
+        { t: "Активация спины", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 15 },
+        { t: "Отдых", rest: true },
+        { t: "Осанка и мобильность", ex: ["catCow","wallAngel","thoracicRotation","chestStretch"], min: 15 },
+        { t: "Отдых", rest: true },
+        { t: "Полный комплекс", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 18 },
+        { t: "Отдых", rest: true },
+        { t: "Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
       ]},
-      {title:"Неделя 4",days:[
-        {t:"Пиковая нагрузка",ex:["sidePlank","plankRotation","bicycle","sideLegRaise"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Финал",ex:["bicycle","sidePlank","plankRotation","sideLegRaise"],min:28},
-        {t:"Отдых",rest:true},
-        {t:"Итоговый",ex:["sidePlank","bicycle","plankRotation","sideLegRaise"],min:30},
-        {t:"Отдых",rest:true},
-        {t:"Замер",ex:["sidePlank"],min:10}
+      { title: "Нед 3-4 (финал)", days: [
+        { t: "Спина пик", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 22 },
+        { t: "Отдых", rest: true },
+        { t: "Полная осанка", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 25 },
+        { t: "Отдых", rest: true },
+        { t: "Финальный максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 28 },
+        { t: "Отдых", rest: true },
+        { t: "Замер осанки", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
       ]}
     ]
   }
 };
-
 // ======= STATE =======
 let S = {
   cur: 's-home',
@@ -658,7 +750,7 @@ function switchTab(tab) {
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='program') {
-    S.week=0; renderProg();
+    S.prog='main'; S.week=0; renderProg();
     document.getElementById('prog-back-btn').style.visibility = 'hidden';
   }
   if (tab==='progress') renderProgress();
@@ -684,24 +776,42 @@ function initHome() {
 function refreshHome() {
   const streak = calcStreak();
   document.getElementById('streak-txt').textContent = `${streak} ${plurDays(streak)} подряд`;
-  // today workout — всегда lower программа для главной
   const total = S.completed.filter(d=>d).length;
-  const wIdx = Math.floor(total/7)%4;
-  const dIdx = total%7;
-  const day = PROGS.lower.weeks[wIdx].days[dIdx];
-  document.getElementById('today-tag').textContent = `День ${dIdx+1} · Неделя ${wIdx+1}`;
+  const absDay = total % 56;
+  const wIdx = Math.floor(absDay / 7);
+  const dIdx = absDay % 7;
+  const prog = PROGS.main;
+  const week = prog.weeks[wIdx];
+  if (!week) return;
+  const day = week.days[dIdx];
+  if (!day) return;
+  // Общий прогресс программы
+  const pct = Math.round((total / 56) * 100);
+  document.getElementById('today-tag').textContent = `Неделя ${wIdx+1} из 8 · День ${dIdx+1}`;
   document.getElementById('today-title').textContent = day.t;
-  document.getElementById('today-meta').textContent = day.rest ? 'День отдыха — прогулка 30 мин' : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
+  document.getElementById('today-meta').textContent = day.rest
+    ? (day.note || 'День отдыха — восстановление')
+    : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
 }
 
 function openToday() {
   const total = S.completed.filter(d=>d).length;
-  const wIdx = Math.floor(total/7)%4;
-  const dIdx = total%7;
-  const day = PROGS.lower.weeks[wIdx].days[dIdx];
-  if (day.rest) { alert('Сегодня день отдыха!\nСходи на прогулку 30 минут — это тоже часть программы.'); return; }
-  S.prog = 'lower';
-  openDay(day, `День ${dIdx+1} · Неделя ${wIdx+1}`);
+  const prog = PROGS.main;
+  // Считаем абсолютный день (0-55 = 8 недель × 7 дней)
+  const absDay = total % 56;
+  const wIdx = Math.floor(absDay / 7);
+  const dIdx = absDay % 7;
+  const week = prog.weeks[wIdx];
+  if (!week) return;
+  const day = week.days[dIdx];
+  if (!day) return;
+  if (day.rest) {
+    const note = day.note || 'Отдых — восстановление тоже часть программы.';
+    alert('Сегодня день отдыха!\n' + note);
+    return;
+  }
+  S.prog = 'main';
+  openDay(day, `Неделя ${wIdx+1} · ${day.t}`);
 }
 
 function plurDays(n) {
@@ -712,7 +822,7 @@ function plurDays(n) {
 
 // ======= PROGRAM =======
 function openProgram(key) {
-  S.prog = key; S.week = 0;
+  S.prog = key || 'main'; S.week = 0;
   renderProg();
   push('s-prog');
   showNav(true);
@@ -727,8 +837,8 @@ window.addEventListener('popstate', () => {
 history.pushState(null,'','');
 
 function renderProg() {
-  const p = PROGS[S.prog];
-  document.getElementById('prog-h1').textContent = S.prog==='lower'?'Нижний кор':'Боковые';
+  const p = PROGS[S.prog] || PROGS.main;
+  document.getElementById('prog-h1').textContent = p.title;
   document.getElementById('prog-tag').textContent = p.tag;
   document.getElementById('prog-title').textContent = p.title;
   document.getElementById('prog-desc').textContent = p.desc;
@@ -744,12 +854,15 @@ function selWeek(i) {
 }
 
 function renderDays() {
-  const week = PROGS[S.prog].weeks[S.week];
+  const prog = PROGS[S.prog] || PROGS.main;
+  const week = prog.weeks[S.week];
+  if (!week) return;
   const total = S.completed.filter(d=>d).length;
+  const absDay = S.prog==='main' ? (total % 56) : (total % 28);
   document.getElementById('day-list').innerHTML = week.days.map((d,i)=>{
     const absIdx = S.week*7+i;
-    const isDone = S.prog==='lower' && absIdx < total;
-    const isToday = S.prog==='lower' && absIdx === total;
+    const isDone = absIdx < total;
+    const isToday = absIdx === absDay;
     const nc = isDone?'done':isToday?'today':'';
     return `<div class="day-card ${d.rest?'':'clickable'}" ${d.rest?'':'onclick="openDayFromProg('+S.week+','+i+')"'}>
       <div class="day-header">
@@ -761,9 +874,10 @@ function renderDays() {
 }
 
 function openDayFromProg(w,d) {
-  const day = PROGS[S.prog].weeks[w].days[d];
-  if (day.rest) return;
-  openDay(day, `День ${d+1} · Неделя ${w+1}`);
+  const prog = PROGS[S.prog] || PROGS.main;
+  const day = prog.weeks[w]?.days[d];
+  if (!day || day.rest) return;
+  openDay(day, `Неделя ${w+1} · ${day.t}`);
 }
 
 function openDay(day, tag) {
