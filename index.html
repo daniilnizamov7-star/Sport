@@ -251,6 +251,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="prog-info"><div class="prog-title">Боковые мышцы</div><div class="prog-sub">Obliques · Удержание живота</div></div>
         <div class="prog-badge">4 нед</div>
       </div>
+      <div class="prog-card" onclick="openNutrition()">
+        <div class="prog-icon" style="background:rgba(240,160,96,.1)">🥗</div>
+        <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · Дефицит · Кубики</div></div>
+        <div class="prog-badge">калькулятор</div>
+      </div>
       <div class="prog-card" style="opacity:.4;pointer-events:none">
         <div class="prog-icon" style="background:rgba(255,255,255,.05)">🔒</div>
         <div class="prog-info"><div class="prog-title">Всё тело</div><div class="prog-sub">Скоро · Мужчины / Женщины / Дети</div></div>
@@ -467,7 +472,25 @@ const EX = {
     tags:["боковые","стабилизация"],
     about:"Работает с квадратной мышцей поясницы и боковыми стабилизаторами — второй линией защиты против выпирающего живота.",
     steps:[{t:"Лягте на бок, тело прямое, нижняя рука под головой"},{t:"Медленно поднимите верхнюю ногу на 40–45°"},{t:"<strong>Задержите 1 секунду</strong> в верхней точке"},{t:"Медленно опустите. Не кладите ногу между повторами"}],
-    mistakes:["Тело поворачивается — зафиксируйте бёдра","Слишком высоко — болит поясница","Нет задержки в верхней точке"],zone:"oblique"}
+    mistakes:["Тело поворачивается — зафиксируйте бёдра","Слишком высоко — болит поясница","Нет задержки в верхней точке"],zone:"oblique"},
+  hollowKnees:{name:"Hollow — колени согнуты",params:"3 × 20 сек",sets:3,dur:20,isTime:true,muscle:"Весь кор",
+    tags:["нижний кор","изометрия","начальный"],
+    about:"Облегчённая версия Hollow Body. Согнутые колени уменьшают рычаг — легче удержать поясницу прижатой. Начинай здесь, переходи на прямые ноги когда поясница перестанет отрываться.",
+    steps:[{t:"Лягте на спину, прижмите поясницу к полу"},{t:"Поднимите голову, плечи и согнутые колени под 90°"},{t:"Руки вытяните вперёд"},{t:"<strong>Поясница не отрывается</strong> — если отрывается, это слишком сложно, нужна помощь тренера"}],
+    mistakes:["Поясница отрывается — упрости ещё больше","Задержка дыхания","Тянуть шею вперёд"],
+    zone:"lower"},
+  breathingTVA:{name:"Дыхание + поперечная",params:"5 циклов · 2 мин",sets:1,reps:5,isTime:false,muscle:"Поперечная",
+    tags:["поперечная","дыхание","активация"],
+    about:"Учит кор держать напряжение без усилий. Это база — без этого навыка остальные упражнения работают вполсилы.",
+    steps:[{t:"Лягте, одну руку на нижний живот"},{t:"Вдох 4 сек — живот мягкий, рука поднимается"},{t:"Выдох 6 сек со звуком «сс» — <strong>пупок к позвоночнику</strong>, рука опускается"},{t:"Задержка 3 сек на пике — дышите поверхностно"},{t:"Повтор 5 раз. Рука контролирует движение"}],
+    mistakes:["Живот выпячивается на вдохе","Дышите грудью вместо живота","Торопиться — счёт 4-6-3 обязателен"],
+    zone:"lower"},
+  hipFlexorStretch:{name:"Растяжка сгибателей бедра",params:"2 × 30 сек каждой",sets:2,dur:30,isTime:true,muscle:"Сгибатели бедра",
+    tags:["растяжка","сгибатели","осанка"],
+    about:"Зажатые сгибатели тянут таз вперёд — живот визуально выпячивается даже при сильных мышцах. Расслабил сгибатели — живот подтянулся.",
+    steps:[{t:"Полувыпад: переднее колено над стопой, заднее колено на полу"},{t:"<strong>Подай таз вперёд и вниз</strong> — не прогибая поясницу"},{t:"Почувствуй растяжение в передней части заднего бедра"},{t:"Дышите спокойно 30 секунд, смените ногу"}],
+    mistakes:["Прогиб в пояснице — нейтральный таз","Нет ощущения растяжки — подай таз сильнее","Меньше 30 секунд — нужно время"],
+    zone:"lower"}
 };
 
 const PROGS = {
@@ -477,13 +500,13 @@ const PROGS = {
     why:[{t:"<strong>Вакуум</strong> — единственное упражнение, напрямую тренирующее поперечную мышцу."},{t:"<strong>Мёртвый жук</strong> — учит удерживать поясницу при движении конечностей."},{t:"<strong>Hollow Body</strong> — максимальное изометрическое напряжение без осевой нагрузки."}],
     weeks:[
       {title:"Неделя 1",days:[
-        {t:"Активация поперечной",ex:["vacuum","deadbug","legRaise"],min:15},
+        {t:"Активация поперечной",ex:["breathingTVA","vacuum","deadbug","legRaise"],min:17},
         {t:"Отдых — прогулка 30 мин",rest:true},
         {t:"Кор + стабилизация",ex:["vacuum","hollowBody","deadbug"],min:17},
         {t:"Отдых",rest:true},
         {t:"Активация × усиление",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
         {t:"Отдых",rest:true},
-        {t:"Лёгкое повторение",ex:["vacuum","deadbug"],min:12}
+        {t:"Лёгкое + растяжка",ex:["vacuum","deadbug","hipFlexorStretch"],min:14}
       ]},
       {title:"Неделя 2",days:[
         {t:"Полный нижний кор",ex:["vacuum","deadbug","legRaise","hollowBody"],min:20},
@@ -620,7 +643,7 @@ function showNav(show) {
 function switchTab(tab) {
   stopTimer();
   // Скрываем всё
-  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete'].forEach(id => {
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
@@ -641,14 +664,6 @@ function switchTab(tab) {
   if (tab==='progress') renderProgress();
 }
 
-// Открыть программу из карточки на главной — через push (сохраняет home в стеке)
-function openProgram(key) {
-  S.prog = key; S.week = 0;
-  renderProg();
-  push('s-prog');
-  showNav(true);
-  document.getElementById('prog-back-btn').style.visibility = 'visible';
-}
 
 // Android back button — не вылетаем из PWA
 window.addEventListener('popstate', () => {
@@ -809,9 +824,22 @@ function renderStep() {
   document.getElementById('aw-set').textContent = S.awSet;
   document.getElementById('aw-sets').textContent = e.sets;
   document.getElementById('aw-reps').textContent = e.isTime ? `${S.awIsRest?20:e.dur} сек` : (S.awIsRest?'20 сек':`${e.reps} повт`);
-  document.getElementById('aw-hint').textContent = S.awIsRest
+  const checks = {
+    vacuum: "Рука на низу живота — он должен быть твёрдым",
+    deadbug: "Ладонь под поясницей — не должна выниматься",
+    legRaise: "Чувствуешь поясницу? Согни колени чуть сильнее",
+    hollowKnees: "Рука под поясницей — зазора нет?",
+    hollowBody: "Рука под поясницей — зазора нет?",
+    breathingTVA: "Рука на животе: вниз на выдохе, вверх на вдохе"
+  };
+  let hintText = S.awIsRest
     ? 'Дышите спокойно. Живот расслаблен.'
     : e.steps[0].t.replace(/<[^>]+>/g,'');
+  if (!S.awIsRest && e.zone==='lower') hintText += '<br>🔑 Поясница прижата — это главное';
+  if (!S.awIsRest && checks[S.awEx[S.awIdx] ? Object.keys(EX).find(k=>EX[k]===e) : '']) {
+    hintText += '<br>✅ ' + checks[Object.keys(EX).find(k=>EX[k]===e)];
+  }
+  document.getElementById('aw-hint').innerHTML = hintText;
 
   // Прогресс-точки
   document.getElementById('aw-dots').innerHTML = S.awEx.map((_,i)=>
@@ -949,13 +977,159 @@ function renderProgress() {
 
 // ======= SERVICE WORKER =======
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      // Проверяем обновление при каждом запуске
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(newSW);
+          }
+        });
+      });
+    } catch(e) {}
   });
+}
+
+function showUpdateBanner(sw) {
+  const b = document.createElement('div');
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c8f060;color:#0d0d12;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-family:var(--fb);font-size:13px;font-weight:500';
+  b.innerHTML = '<span>🔄 Доступна новая версия</span><button onclick="applyUpdate()" style="background:#0d0d12;color:#c8f060;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Обновить</button>';
+  document.body.appendChild(b);
+  window._pendingSW = sw;
+}
+
+function applyUpdate() {
+  if (window._pendingSW) {
+    window._pendingSW.postMessage('skipWaiting');
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
+  }
+}
+
+// ======= NUTRITION =======
+function openNutrition() {
+  push('s-nutrition');
+  showNav(true);
+  calcNut();
+}
+
+function calcNut() {
+  const w = +document.getElementById('nut-w').value;
+  const h = +document.getElementById('nut-h').value;
+  const a = +document.getElementById('nut-a').value;
+  const act = +document.getElementById('nut-act').value;
+  document.getElementById('nut-wv').textContent = w + ' кг';
+  document.getElementById('nut-hv').textContent = h + ' см';
+  document.getElementById('nut-av').textContent = a + ' ' + (a===21||a===31||a===41?'год':a%10===1&&a%100!==11?'год':[2,3,4].includes(a%10)&&![12,13,14].includes(a%100)?'года':'лет');
+  // Mifflin-St Jeor для мужчин
+  const bmr = 10*w + 6.25*h - 5*a + 5;
+  const tdee = Math.round(bmr * act);
+  const target = tdee - 350;
+  document.getElementById('nut-kcal').textContent = target;
+  document.getElementById('nut-maintenance').textContent = 'Поддержание веса: ' + tdee + ' ккал/день';
+  document.getElementById('nut-prot').textContent = Math.round(w * 2);
+  document.getElementById('nut-fat').textContent = Math.round(w * 1);
+  const protKcal = Math.round(w*2)*4;
+  const fatKcal = Math.round(w*1)*9;
+  document.getElementById('nut-carb').textContent = Math.round((target - protKcal - fatKcal) / 4);
 }
 
 // ======= INIT =======
 initHome();
 </script>
+
+<!-- NUTRITION SCREEN -->
+<div class="screen hidden" id="s-nutrition">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h1>Питание</h1>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+    <div style="padding:6px 20px 16px">
+      <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Твой калькулятор</div>
+      <p style="font-size:13px;color:var(--text2);font-weight:300;line-height:1.5">Введи параметры — получи точный дефицит для сжигания нижнего жира без потери мышц.</p>
+    </div>
+
+    <!-- Калькулятор -->
+    <div style="margin:0 20px 16px;background:var(--bg3);border-radius:var(--card-r);padding:16px">
+      <div style="font-family:var(--font-head);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Параметры</div>
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Вес</label>
+        <input type="range" id="nut-w" min="50" max="130" value="79" oninput="calcNut()" style="flex:1;accent-color:var(--accent)">
+        <span id="nut-wv" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">79 кг</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Рост</label>
+        <input type="range" id="nut-h" min="155" max="200" value="179" oninput="calcNut()" style="flex:1;accent-color:var(--accent)">
+        <span id="nut-hv" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">179 см</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Возраст</label>
+        <input type="range" id="nut-a" min="18" max="60" value="31" oninput="calcNut()" style="flex:1;accent-color:var(--accent)">
+        <span id="nut-av" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">31 год</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Активность</label>
+        <select id="nut-act" onchange="calcNut()" style="flex:1;background:var(--bg4);border:none;border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;cursor:pointer">
+          <option value="1.2">Сидячая работа</option>
+          <option value="1.375" selected>Лёгкая (1–3 трен/нед)</option>
+          <option value="1.55">Умеренная (3–5 трен/нед)</option>
+          <option value="1.725">Высокая (6–7 трен/нед)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Результат -->
+    <div id="nut-result" style="margin:0 20px 16px;background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.18);border-radius:var(--card-r);padding:16px">
+      <div id="nut-kcal" style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--accent);margin-bottom:2px">—</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">ккал/день для похудения (дефицит −350 ккал)</div>
+      <div id="nut-maintenance" style="font-size:11px;color:var(--text3);margin-bottom:14px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--bg3);border-radius:10px;padding:10px;text-align:center">
+          <div id="nut-prot" style="font-family:var(--font-head);font-size:18px;font-weight:800;color:#60b4f0;margin-bottom:2px">—</div>
+          <div style="font-size:10px;color:var(--text3)">Белок, г</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:10px;text-align:center">
+          <div id="nut-fat" style="font-family:var(--font-head);font-size:18px;font-weight:800;color:#f0a060;margin-bottom:2px">—</div>
+          <div style="font-size:10px;color:var(--text3)">Жиры, г</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:10px;text-align:center">
+          <div id="nut-carb" style="font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--accent);margin-bottom:2px">—</div>
+          <div style="font-size:10px;color:var(--text3)">Углев, г</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Советы -->
+    <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Белок — главное правило</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300"><strong style="color:var(--text);font-weight:500">2 г на кг веса</strong> — защищает мышцы при дефиците. Курица, яйца, творог, рыба. Без белка при дефиците уходят мышцы, а не жир.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Убери первым</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">Сладкое, хлеб, соки, алкоголь. <strong style="color:var(--text);font-weight:500">Пустые калории</strong> без насыщения. Один стакан сока = кусок хлеба по калориям.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Не голодай жёстко</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">Дефицит больше 500 ккал — тело включает режим сохранения жира. <strong style="color:var(--text);font-weight:500">−300–400 ккал</strong> идеально: медленно, но мышцы целы.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Вода и жир</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300"><strong style="color:var(--text);font-weight:500">2–2.5 л в день</strong> — ускоряет метаболизм, снижает отёки. Часть "живота" — это просто задержка воды от обезвоживания.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+        <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Кубики — это жир, не мышцы</div>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">При 178 и 79 кг у тебя нормальный вес. Кубики уже есть — просто под жиром. <strong style="color:var(--text);font-weight:500">Убери жир — появятся кубики.</strong> Отдельно "качать кубики" не нужно.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
