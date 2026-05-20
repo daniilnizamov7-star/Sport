@@ -270,7 +270,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <!-- PROGRAM -->
 <div class="screen hidden" id="s-prog">
   <div class="topbar">
-    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <button class="back-btn" id="prog-back-btn" onclick="goBack()" style="visibility:hidden"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
     <h1 id="prog-h1">Нижний кор</h1>
     <div style="width:36px"></div>
   </div>
@@ -619,21 +619,43 @@ function showNav(show) {
 
 function switchTab(tab) {
   stopTimer();
+  // Скрываем всё
   ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
+  // Программы — показываем s-prog как root (стек сбрасываем)
   const map = {home:'s-home', program:'s-prog', progress:'s-progress'};
-  document.getElementById(map[tab]).classList.remove('hidden');
-  S.cur = map[tab];
-  S.stack = [];
+  const target = map[tab];
+  document.getElementById(target).classList.remove('hidden');
+  S.cur = target;
+  S.stack = []; // стек чист — кнопка Назад на root-экранах не нужна
   showNav(true);
   ['home','program','progress'].forEach(t => {
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
-  if (tab==='program') { S.week=0; renderProg(); }
+  if (tab==='program') {
+    S.week=0; renderProg();
+    document.getElementById('prog-back-btn').style.visibility = 'hidden';
+  }
   if (tab==='progress') renderProgress();
 }
+
+// Открыть программу из карточки на главной — через push (сохраняет home в стеке)
+function openProgram(key) {
+  S.prog = key; S.week = 0;
+  renderProg();
+  push('s-prog');
+  showNav(true);
+  document.getElementById('prog-back-btn').style.visibility = 'visible';
+}
+
+// Android back button — не вылетаем из PWA
+window.addEventListener('popstate', () => {
+  if (S.stack.length > 0) { history.pushState(null,'',''); goBack(); }
+  else { history.pushState(null,'',''); }
+});
+history.pushState(null,'','');
 
 // ======= HOME =======
 function initHome() {
@@ -679,7 +701,15 @@ function openProgram(key) {
   renderProg();
   push('s-prog');
   showNav(true);
+  document.getElementById('prog-back-btn').style.visibility = 'visible';
 }
+
+// Android back button — не вылетаем из PWA
+window.addEventListener('popstate', () => {
+  if (S.stack.length > 0) { history.pushState(null,'',''); goBack(); }
+  else { history.pushState(null,'',''); }
+});
+history.pushState(null,'','');
 
 function renderProg() {
   const p = PROGS[S.prog];
@@ -732,7 +762,10 @@ function openDay(day, tag) {
     return `<div class="ex-card" onclick="openEx('${k}')">
       <div class="ex-card-inner">
         <div class="ex-num-badge">${i+1}</div>
-        <div class="ex-details"><div class="ex-name">${e.name}</div><div class="ex-params">${e.params}</div></div>
+        <div class="ex-details">
+          <div class="ex-name">${e.name}</div>
+          <div class="ex-params">${e.params} &nbsp;·&nbsp; ⏸ ${e.isTime ? "20 сек отдых" : "30 сек отдых"}</div>
+        </div>
         <span class="ex-muscle-tag">${e.muscle}</span>
       </div></div>`;
   }).join('');
