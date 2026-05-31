@@ -874,13 +874,14 @@ function renderDays() {
     const isDone = absIdx < total;
     const isNow = absIdx === absDay;
     const nc = isDone?'done':isNow?'today':'';
-    // Кнопка для любого невыполненного дня
-    const markBtn = (!isDone && !d.rest)
+    // Кнопка для любого невыполненного дня (тренировка или отдых)
+    const btnLabel = d.rest ? '→ Пропустить' : '✓ Уже выполнил';
+    const markBtn = !isDone
       ? `<div style="padding:0 14px 12px"><button
           onclick="event.stopPropagation();markDayDone('${S.prog}',${absIdx})"
           style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
           border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
-          ✓ Уже выполнил</button></div>`
+          ${btnLabel}</button></div>`
       : '';
     return `<div class="day-card ${d.rest?'':'clickable'}" ${d.rest?'':'onclick="openDayFromProg('+S.week+','+i+')"'}>
       <div class="day-header">
