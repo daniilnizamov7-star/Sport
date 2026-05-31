@@ -26,6 +26,10 @@
   /* Fallback если Google Fonts не загрузились */
   --font-head: 'Syne', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'DM Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  --fb: 'DM Sans', -apple-system, sans-serif;
+  --font-head: 'Syne', -apple-system, sans-serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --card-r: 16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);overflow:hidden}
@@ -687,6 +691,7 @@ let S = {
   workoutDone: false,
   // Persistence
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
+  completedBack: JSON.parse(localStorage.getItem('fc_done_back') || '[]'),
 };
 
 // ======= STREAK (правильный расчёт) =======
@@ -857,7 +862,9 @@ function renderDays() {
   const prog = PROGS[S.prog] || PROGS.main;
   const week = prog.weeks[S.week];
   if (!week) return;
-  const total = S.completed.filter(d=>d).length;
+  const total = S.prog === 'back'
+    ? S.completedBack.filter(d=>d).length
+    : S.completed.filter(d=>d).length;
   const absDay = S.prog==='main' ? (total % 56) : (total % 28);
   document.getElementById('day-list').innerHTML = week.days.map((d,i)=>{
     const absIdx = S.week*7+i;
@@ -933,6 +940,7 @@ function startActive() {
 
 function renderStep() {
   const e = S.awEx[S.awIdx];
+  if (!e) { finishActive(); return; }  // защита от выхода за границу
   document.getElementById('aw-counter').textContent = `Упражнение ${S.awIdx+1} из ${S.awEx.length}`;
   document.getElementById('aw-name').textContent = S.awIsRest ? '⏸ Отдых' : e.name;
   document.getElementById('aw-set').textContent = S.awSet;
@@ -950,8 +958,9 @@ function renderStep() {
     ? 'Дышите спокойно. Живот расслаблен.'
     : e.steps[0].t.replace(/<[^>]+>/g,'');
   if (!S.awIsRest && e.zone==='lower') hintText += '<br>🔑 Поясница прижата — это главное';
-  if (!S.awIsRest && checks[S.awEx[S.awIdx] ? Object.keys(EX).find(k=>EX[k]===e) : '']) {
-    hintText += '<br>✅ ' + checks[Object.keys(EX).find(k=>EX[k]===e)];
+  if (!S.awIsRest) {
+    const exKey = S.activeEx[S.awIdx];
+    if (exKey && checks[exKey]) hintText += '<br>✅ ' + checks[exKey];
   }
   document.getElementById('aw-hint').innerHTML = hintText;
 
@@ -1033,10 +1042,17 @@ function finishActive() {
   S.workoutDone=true;
   stopTimer();
   const today = new Date().toDateString();
-  // Не дублируем если уже записан сегодня
-  if (!S.completed.includes(today)) {
-    S.completed.push(today);
-    localStorage.setItem('fc_done', JSON.stringify(S.completed));
+  // Записываем в нужный массив в зависимости от программы
+  if (S.prog === 'back') {
+    if (!S.completedBack.includes(today)) {
+      S.completedBack.push(today);
+      localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack));
+    }
+  } else {
+    if (!S.completed.includes(today)) {
+      S.completed.push(today);
+      localStorage.setItem('fc_done', JSON.stringify(S.completed));
+    }
   }
   const msgs=[
     "Поперечная мышца получила нагрузку.\nВозвращайся завтра.",
@@ -1054,7 +1070,7 @@ function finishActive() {
 
 function finishWorkout() {
   stopTimer();
-  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete'].forEach(id=>{
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-done','s-nutrition'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
@@ -1148,7 +1164,7 @@ function calcNut() {
   document.getElementById('nut-fat').textContent = Math.round(w * 1);
   const protKcal = Math.round(w*2)*4;
   const fatKcal = Math.round(w*1)*9;
-  document.getElementById('nut-carb').textContent = Math.round((target - protKcal - fatKcal) / 4);
+  document.getElementById('nut-carb').textContent = Math.max(0, Math.round((target - protKcal - fatKcal) / 4));
 }
 
 // ======= INIT =======
@@ -1169,7 +1185,7 @@ initHome();
     </div>
 
     <!-- Калькулятор -->
-    <div style="margin:0 20px 16px;background:var(--bg3);border-radius:var(--card-r);padding:16px">
+    <div style="margin:0 20px 16px;background:var(--bg3);border-radius:var(--r);padding:16px">
       <div style="font-family:var(--font-head);font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Параметры</div>
 
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
@@ -1199,7 +1215,7 @@ initHome();
     </div>
 
     <!-- Результат -->
-    <div id="nut-result" style="margin:0 20px 16px;background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.18);border-radius:var(--card-r);padding:16px">
+    <div id="nut-result" style="margin:0 20px 16px;background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.18);border-radius:var(--r);padding:16px">
       <div id="nut-kcal" style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--accent);margin-bottom:2px">—</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px">ккал/день для похудения (дефицит −350 ккал)</div>
       <div id="nut-maintenance" style="font-size:11px;color:var(--text3);margin-bottom:14px"></div>
@@ -1221,23 +1237,23 @@ initHome();
 
     <!-- Советы -->
     <div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:10px">
-      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Белок — главное правило</div>
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300"><strong style="color:var(--text);font-weight:500">2 г на кг веса</strong> — защищает мышцы при дефиците. Курица, яйца, творог, рыба. Без белка при дефиците уходят мышцы, а не жир.</p>
       </div>
-      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Убери первым</div>
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">Сладкое, хлеб, соки, алкоголь. <strong style="color:var(--text);font-weight:500">Пустые калории</strong> без насыщения. Один стакан сока = кусок хлеба по калориям.</p>
       </div>
-      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Не голодай жёстко</div>
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">Дефицит больше 500 ккал — тело включает режим сохранения жира. <strong style="color:var(--text);font-weight:500">−300–400 ккал</strong> идеально: медленно, но мышцы целы.</p>
       </div>
-      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Вода и жир</div>
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300"><strong style="color:var(--text);font-weight:500">2–2.5 л в день</strong> — ускоряет метаболизм, снижает отёки. Часть "живота" — это просто задержка воды от обезвоживания.</p>
       </div>
-      <div style="background:var(--bg3);border-radius:var(--card-r);padding:14px 16px">
+      <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Кубики — это жир, не мышцы</div>
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">При 178 и 79 кг у тебя нормальный вес. Кубики уже есть — просто под жиром. <strong style="color:var(--text);font-weight:500">Убери жир — появятся кубики.</strong> Отдельно "качать кубики" не нужно.</p>
       </div>
