@@ -869,14 +869,21 @@ function renderDays() {
   document.getElementById('day-list').innerHTML = week.days.map((d,i)=>{
     const absIdx = S.week*7+i;
     const isDone = absIdx < total;
-    const isToday = absIdx === absDay;
-    const nc = isDone?'done':isToday?'today':'';
+    const isNow = absIdx === absDay;
+    const nc = isDone?'done':isNow?'today':'';
+    const markBtn = (!isDone && !isNow && !d.rest)
+      ? `<div style="padding:0 14px 12px"><button
+          onclick="event.stopPropagation();markDayDone('${S.prog}',${absIdx})"
+          style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
+          border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
+          ✓ Уже выполнил</button></div>`
+      : '';
     return `<div class="day-card ${d.rest?'':'clickable'}" ${d.rest?'':'onclick="openDayFromProg('+S.week+','+i+')"'}>
       <div class="day-header">
         <div class="day-num ${nc}">${isDone?'✓':i+1}</div>
         <div class="day-info"><div class="day-title">${d.t}</div><div class="day-sub">${d.rest?'День отдыха':`${d.ex?.length||0} упр · ${d.min||15} мин`}</div></div>
-        ${d.rest?'':'<div class="day-arrow">›</div>'}
-      </div></div>`;
+        ${isDone?'<div style="color:var(--acc);font-size:16px">✓</div>':'<div class="day-arrow">›</div>'}
+      </div>${markBtn}</div>`;
   }).join('');
 }
 
@@ -1171,6 +1178,27 @@ function calcNut() {
   const protKcal = Math.round(w*2)*4;
   const fatKcal = Math.round(w*1)*9;
   document.getElementById('nut-carb').textContent = Math.max(0, Math.round((target - protKcal - fatKcal) / 4));
+}
+
+// ======= РУЧНАЯ ОТМЕТКА =======
+function markDayDone(progKey, absIdx) {
+  const today = new Date().toDateString();
+  if (progKey === 'back') {
+    // Добавляем нужное количество дат чтобы дойти до absIdx
+    while (S.completedBack.length <= absIdx) {
+      const d = new Date(Date.now() - (absIdx - S.completedBack.length) * 86400000);
+      S.completedBack.push(d.toDateString());
+    }
+    localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack));
+  } else {
+    while (S.completed.length <= absIdx) {
+      const d = new Date(Date.now() - (absIdx - S.completed.length) * 86400000);
+      S.completed.push(d.toDateString());
+    }
+    localStorage.setItem('fc_done', JSON.stringify(S.completed));
+  }
+  renderDays();
+  refreshHome();
 }
 
 // ======= INIT =======
