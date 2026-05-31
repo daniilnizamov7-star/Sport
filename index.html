@@ -697,7 +697,10 @@ let S = {
 // ======= STREAK (правильный расчёт) =======
 function calcStreak() {
   if (!S.completed.length) return 0;
-  const sorted = [...new Set(S.completed)].sort((a,b) => new Date(b)-new Date(a));
+  // Фильтруем псевдодаты (done_N) — считаем только реальные даты
+  const realDates = S.completed.filter(d => !String(d).startsWith('done_'));
+  if (!realDates.length) return 0;
+  const sorted = [...new Set(realDates)].sort((a,b) => new Date(b)-new Date(a));
   const today = new Date().toDateString();
   const yesterday = new Date(Date.now()-86400000).toDateString();
   if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
@@ -871,7 +874,8 @@ function renderDays() {
     const isDone = absIdx < total;
     const isNow = absIdx === absDay;
     const nc = isDone?'done':isNow?'today':'';
-    const markBtn = (!isDone && !isNow && !d.rest)
+    // Кнопка для любого невыполненного дня
+    const markBtn = (!isDone && !d.rest)
       ? `<div style="padding:0 14px 12px"><button
           onclick="event.stopPropagation();markDayDone('${S.prog}',${absIdx})"
           style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
@@ -1182,23 +1186,22 @@ function calcNut() {
 
 // ======= РУЧНАЯ ОТМЕТКА =======
 function markDayDone(progKey, absIdx) {
-  const today = new Date().toDateString();
-  if (progKey === 'back') {
-    // Добавляем нужное количество дат чтобы дойти до absIdx
-    while (S.completedBack.length <= absIdx) {
-      const d = new Date(Date.now() - (absIdx - S.completedBack.length) * 86400000);
-      S.completedBack.push(d.toDateString());
-    }
-    localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack));
-  } else {
-    while (S.completed.length <= absIdx) {
-      const d = new Date(Date.now() - (absIdx - S.completed.length) * 86400000);
-      S.completed.push(d.toDateString());
-    }
-    localStorage.setItem('fc_done', JSON.stringify(S.completed));
+  // Заполняем все дни до absIdx включительно
+  const arr = progKey === 'back' ? S.completedBack : S.completed;
+  const key = progKey === 'back' ? 'fc_done_back' : 'fc_done';
+  // Добавляем записи пока не дойдём до нужного индекса
+  while (arr.length <= absIdx) {
+    // Каждой записи даём уникальную псевдодату чтобы не было дублей
+    arr.push('done_' + arr.length);
   }
+  localStorage.setItem(key, JSON.stringify(arr));
   renderDays();
   refreshHome();
+  // Показываем подтверждение
+  const btn = event.target;
+  btn.textContent = '✓ Отмечено';
+  btn.style.background = 'rgba(200,240,96,.25)';
+  btn.disabled = true;
 }
 
 // ======= INIT =======
