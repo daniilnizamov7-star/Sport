@@ -630,7 +630,7 @@ const PROGS = {
 ,
   back: {
     title: "Спина и осанка: 4 недели",
-    tag: "Параллельно с основной · 3 раза в неделю · 15 мин",
+    tag: "Параллельно с основной · дни отдыха · 15 мин",
     desc: "Исправляет нижний перекрёстный синдром — причину сутулости и выпирающего живота. Делай в дни отдыха от основной программы.",
     why: [
       {t:"<strong>Ягодичный мост</strong> — слабые ягодицы наклоняют таз вперёд, живот выпирает визуально."},
@@ -639,41 +639,41 @@ const PROGS = {
       {t:"<strong>Растяжка грудных</strong> — зажатые грудные тянут плечи вперёд. Растянул — плечи ушли назад."}
     ],
     weeks: [
-      { title: "Нед 1-2", days: [
-        { t: "Активация спины", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 15 },
-        { t: "Отдых", rest: true },
-        { t: "Осанка и мобильность", ex: ["catCow","wallAngel","thoracicRotation","chestStretch"], min: 15 },
-        { t: "Отдых", rest: true },
-        { t: "Полный комплекс", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 18 },
-        { t: "Отдых", rest: true },
-        { t: "Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
+      { title: "Неделя 1", days: [
+        { t: "День 1 — Активация спины", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 15 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Осанка", ex: ["catCow","wallAngel","chestStretch","thoracicRotation"], min: 15 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Полный комплекс", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 18 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
       ]},
-      { title: "Нед 3-4", days: [
-        { t: "Спина интенсив", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 20 },
-        { t: "Отдых", rest: true },
-        { t: "Осанка полная", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 22 },
-        { t: "Отдых", rest: true },
-        { t: "Максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 25 },
-        { t: "Отдых", rest: true },
-        { t: "Растяжка финал", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      { title: "Неделя 2", days: [
+        { t: "День 1 — Спина + ягодицы", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 17 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Мобильность", ex: ["catCow","wallAngel","thoracicRotation","chestStretch"], min: 17 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Усиление", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 20 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
       ]},
-      { title: "Нед 1-2 (повтор)", days: [
-        { t: "Активация спины", ex: ["catCow","gluteBridge","birdDog","chestStretch"], min: 15 },
-        { t: "Отдых", rest: true },
-        { t: "Осанка и мобильность", ex: ["catCow","wallAngel","thoracicRotation","chestStretch"], min: 15 },
-        { t: "Отдых", rest: true },
-        { t: "Полный комплекс", ex: ["catCow","gluteBridge","birdDog","wallAngel","chestStretch"], min: 18 },
-        { t: "Отдых", rest: true },
-        { t: "Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch"], min: 12 }
+      { title: "Неделя 3", days: [
+        { t: "День 1 — Интенсив", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 20 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Полная осанка", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 22 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 25 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
       ]},
-      { title: "Нед 3-4 (финал)", days: [
-        { t: "Спина пик", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 22 },
-        { t: "Отдых", rest: true },
-        { t: "Полная осанка", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 25 },
-        { t: "Отдых", rest: true },
-        { t: "Финальный максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 28 },
-        { t: "Отдых", rest: true },
-        { t: "Замер осанки", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      { title: "Неделя 4", days: [
+        { t: "День 1 — Пик", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation"], min: 22 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Финал", ex: ["catCow","wallAngel","gluteBridge","chestStretch","thoracicRotation"], min: 25 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Финальный максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 28 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Замер осанки", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
       ]}
     ]
   }
@@ -1054,11 +1054,17 @@ function finishActive() {
       localStorage.setItem('fc_done', JSON.stringify(S.completed));
     }
   }
-  const msgs=[
+  const msgsMain=[
     "Поперечная мышца получила нагрузку.\nВозвращайся завтра.",
     "Отличная работа. Косые благодарят.\nПродолжай без пропусков.",
     "Тренировка в копилке.\n+1 к стальному кору."
   ];
+  const msgsBack=[
+    "Спина скажет спасибо.\nОсанка исправляется день за днём.",
+    "Ягодицы и разгибатели получили нагрузку.\nЖивот подтянется сам.",
+    "Лопатки, грудные, поясница — всё в работе.\nПродолжай."
+  ];
+  const msgs = S.prog === 'back' ? msgsBack : msgsMain;
   document.getElementById('complete-msg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
   document.getElementById(S.cur).classList.add('slide-left');
   const comp = document.getElementById('s-complete');
@@ -1070,7 +1076,7 @@ function finishActive() {
 
 function finishWorkout() {
   stopTimer();
-  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-done','s-nutrition'].forEach(id=>{
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
