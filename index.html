@@ -30,6 +30,7 @@
   --font-head: 'Syne', -apple-system, sans-serif;
   --font-body: 'DM Sans', -apple-system, sans-serif;
   --card-r: 16px;
+  --acc: #c8f060;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body);overflow:hidden}
@@ -260,6 +261,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="prog-info"><div class="prog-title">Спина и осанка</div><div class="prog-sub">Параллельно с основной · 15 мин</div></div>
         <div class="prog-badge">4 нед</div>
       </div>
+      <div class="prog-card" onclick="openPartner()" style="background:linear-gradient(135deg,rgba(200,240,96,.08),rgba(200,240,96,.03));border:1px solid rgba(200,240,96,.2)">
+        <div class="prog-icon" style="background:rgba(200,240,96,.12);font-size:16px;font-weight:800;color:var(--acc);font-family:var(--font-head)">TP</div>
+        <div class="prog-info"><div class="prog-title">Tatirex Pro</div><div class="prog-sub">Халяль протеин · Рекомендую</div></div>
+        <div class="pbadge" style="background:rgba(200,240,96,.15);color:var(--acc)">халяль</div>
+      </div>
       <div class="prog-card" style="opacity:.4;pointer-events:none">
         <div class="prog-icon" style="background:rgba(255,255,255,.05)">🔒</div>
         <div class="prog-info"><div class="prog-title">Всё тело</div><div class="prog-sub">Скоро · Мужчины / Женщины / Дети</div></div>
@@ -424,6 +430,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <button class="nav-btn" id="nav-progress" onclick="switchTab('progress')">
     <svg viewBox="0 0 24 24" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span>Прогресс</span>
+  </button>
+  <button class="nav-btn" id="nav-partner" onclick="switchTab('partner')">
+    <svg viewBox="0 0 24 24" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+    <span>Партнёр</span>
   </button>
 </nav>
 
@@ -743,12 +753,12 @@ function showNav(show) {
 function switchTab(tab) {
   stopTimer();
   // Скрываем всё
-  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition'].forEach(id => {
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition','s-partner'].forEach(id => {
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
   // Программы — показываем s-prog как root (стек сбрасываем)
-  const map = {home:'s-home', program:'s-prog', progress:'s-progress'};
+  const map = {home:'s-home', program:'s-prog', progress:'s-progress', partner:'s-partner'};
   const target = map[tab];
   document.getElementById(target).classList.remove('hidden');
   S.cur = target;
@@ -760,6 +770,9 @@ function switchTab(tab) {
   if (tab==='program') {
     S.prog='main'; S.week=0; renderProg();
     document.getElementById('prog-back-btn').style.visibility = 'hidden';
+  }
+  if (tab==='partner') {
+    document.getElementById('nav-partner').classList.add('active');
   }
   if (tab==='progress') renderProgress();
 }
@@ -1088,7 +1101,7 @@ function finishActive() {
 
 function finishWorkout() {
   stopTimer();
-  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition'].forEach(id=>{
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition','s-partner','s-tatirex'].forEach(id=>{
     document.getElementById(id).classList.add('hidden');
     document.getElementById(id).classList.remove('slide-left');
   });
@@ -1157,7 +1170,6 @@ function applyUpdate() {
   }
 }
 
-// ======= NUTRITION =======
 function openNutrition() {
   push('s-nutrition');
   showNav(true);
@@ -1186,6 +1198,11 @@ function calcNut() {
 }
 
 // ======= РУЧНАЯ ОТМЕТКА =======
+function openPartner(key) {
+  const map = { tatirex: 's-tatirex' };
+  if (map[key]) { push(map[key]); showNav(false); }
+}
+
 function markDayDone(progKey, absIdx) {
   // Заполняем все дни до absIdx включительно
   const arr = progKey === 'back' ? S.completedBack : S.completed;
@@ -1198,6 +1215,7 @@ function markDayDone(progKey, absIdx) {
   localStorage.setItem(key, JSON.stringify(arr));
   renderDays();
   refreshHome();
+  autoBackup();
   // Показываем подтверждение
   const btn = event.target;
   btn.textContent = '✓ Отмечено';
@@ -1205,7 +1223,33 @@ function markDayDone(progKey, absIdx) {
   btn.disabled = true;
 }
 
+
+// ======= ЗАЩИТА ПРОГРЕССА =======
+function autoBackup() {
+  try {
+    const backup = { done: S.completed, doneBack: S.completedBack, ts: Date.now() };
+    localStorage.setItem('fc_backup', JSON.stringify(backup));
+  } catch(e) {}
+}
+
+function checkAndRestore() {
+  try {
+    const raw = localStorage.getItem('fc_backup');
+    if (!raw) return;
+    const b = JSON.parse(raw);
+    if (S.completed.length === 0 && b.done && b.done.length > 0) {
+      S.completed = b.done;
+      localStorage.setItem('fc_done', JSON.stringify(S.completed));
+    }
+    if (S.completedBack.length === 0 && b.doneBack && b.doneBack.length > 0) {
+      S.completedBack = b.doneBack;
+      localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack));
+    }
+  } catch(e) {}
+}
+
 // ======= INIT =======
+checkAndRestore();
 initHome();
 </script>
 
@@ -1296,6 +1340,199 @@ initHome();
         <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">При 178 и 79 кг у тебя нормальный вес. Кубики уже есть — просто под жиром. <strong style="color:var(--text);font-weight:500">Убери жир — появятся кубики.</strong> Отдельно "качать кубики" не нужно.</p>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- PARTNER SCREEN — список партнёров -->
+<div class="screen hidden" id="s-partner">
+  <div class="topbar">
+    <span style="font-family:var(--font-head);font-size:21px;font-weight:800;color:var(--accent)">Партнёры</span>
+  </div>
+  <div class="scroll-area">
+    <div style="padding:0 20px 8px;font-size:12px;color:var(--text3);font-weight:300;line-height:1.5">
+      Проверенные бренды которые я рекомендую своим клиентам лично.
+    </div>
+
+    <!-- Карточка Tatirex Pro -->
+    <div style="margin:12px 20px 0;background:var(--bg3);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:background .15s"
+         onclick="openPartner('tatirex')" ontouchstart="">
+      <div style="padding:16px;display:flex;align-items:center;gap:14px">
+        <!-- Логотип -->
+        <div style="width:52px;height:52px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px;overflow:hidden">
+          <img src="tatirex-логотип.png" alt="Tatirex Pro" style="width:100%;height:100%;object-fit:contain">
+        </div>
+        <div style="flex:1">
+          <div style="font-family:var(--font-head);font-size:15px;font-weight:800;margin-bottom:3px">Tatirex Pro</div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Спортивное питание · Собственное производство</div>
+          <div style="display:flex;gap:6px">
+            <span style="background:rgba(200,240,96,.1);border:1px solid rgba(200,240,96,.25);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--accent);font-weight:600">☪️ Халяль</span>
+            <span style="background:var(--bg4);border-radius:20px;padding:2px 8px;font-size:10px;color:var(--text3)">🇷🇺 РФ</span>
+          </div>
+        </div>
+        <div style="color:var(--text3);font-size:18px">›</div>
+      </div>
+    </div>
+
+    <!-- Плейсхолдер для следующих партнёров -->
+    <div style="margin:10px 20px 0;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.08);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:52px;height:52px;background:var(--bg4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏪</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text3);margin-bottom:2px">Магазин инвентаря</div>
+        <div style="font-size:11px;color:var(--text3);opacity:.6">Скоро · В поиске партнёра</div>
+      </div>
+    </div>
+
+    <div style="height:30px"></div>
+  </div>
+</div>
+
+<!-- TATIREX DETAIL SCREEN -->
+<div class="screen hidden" id="s-tatirex">
+  <div class="topbar">
+    <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <h1>Tatirex Pro</h1>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+
+    <!-- Hero с логотипом из файла -->
+    <div style="margin:4px 20px 16px;background:var(--bg3);border-radius:var(--r);overflow:hidden;position:relative">
+      <div style="position:absolute;inset:0;opacity:.03;background:repeating-linear-gradient(45deg,var(--accent) 0,var(--accent) 1px,transparent 0,transparent 20px);background-size:28px 28px"></div>
+      <div style="padding:20px;position:relative">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:60px;height:60px;background:#fff;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:8px;overflow:hidden">
+            <img src="tatirex-логотип.png" alt="Tatirex Pro" style="width:100%;height:100%;object-fit:contain">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px">Рекомендованный партнёр</div>
+            <div style="font-family:var(--font-head);font-size:18px;font-weight:800;line-height:1">TATIREX PRO</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Собственное производство · РФ</div>
+          </div>
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(200,240,96,.1);border:1px solid rgba(200,240,96,.25);border-radius:20px;padding:4px 12px;margin-bottom:12px">
+          <span style="font-size:13px">☪️</span>
+          <span style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase">Халяль сертифицировано</span>
+        </div>
+        <p style="font-size:13px;color:var(--text2);font-weight:300;line-height:1.6;margin-bottom:4px">Единственный халяль протеин который я использую сам и рекомендую клиентам. Состав чистый, цифры честные.</p>
+        <div style="font-size:11px;color:var(--text3);font-style:italic">— Даниил, FitCore</div>
+      </div>
+    </div>
+
+    <!-- Цифры -->
+    <div style="padding:0 20px;margin-bottom:8px;font-family:var(--font-head);font-size:10px;font-weight:800;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Мультипротеин · 900г · 30 порций</div>
+    <div style="margin:0 20px 16px;background:var(--bg3);border-radius:var(--r);padding:14px 16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--bg4);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--accent)">23г</div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">белка</div>
+        </div>
+        <div style="background:var(--bg4);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--accent)">124</div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">ккал</div>
+        </div>
+        <div style="background:var(--bg4);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--accent)">30</div>
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">порций</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Карточки вкусов с фото -->
+    <div style="padding:0 20px;margin-bottom:8px;font-family:var(--font-head);font-size:10px;font-weight:800;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Вкусы</div>
+    <div style="padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+
+      <div style="background:var(--bg3);border-radius:var(--r);overflow:hidden">
+        <div style="height:140px;overflow:hidden;background:var(--bg4)">
+          <img src="tatirex-chocolate.jpg" alt="Шоколад" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">🍫 Шоколад</div>
+          <div style="font-size:10px;color:var(--text3)">Классика — не надоедает</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:var(--r);overflow:hidden">
+        <div style="height:140px;overflow:hidden;background:var(--bg4)">
+          <img src="tatirex-strawberry.jpg" alt="Клубника" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">🍓 Клубника</div>
+          <div style="font-size:10px;color:var(--text3)">Лёгкий фруктовый</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:var(--r);overflow:hidden">
+        <div style="height:140px;overflow:hidden;background:var(--bg4)">
+          <img src="tatirex-milk.jpg" alt="Молочный" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">🍬 Молочный</div>
+          <div style="font-size:10px;color:var(--text3)">Нейтральный — с чем угодно</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:var(--r);overflow:hidden">
+        <div style="height:140px;overflow:hidden;background:var(--bg4)">
+          <img src="tatirex-cookie.jpg" alt="Шок. печенье" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">🍪 Шок. печенье</div>
+          <div style="font-size:10px;color:var(--text3)">Для сладкоежек</div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:var(--r);overflow:hidden;grid-column:1/-1">
+        <div style="height:140px;overflow:hidden;background:var(--bg4)">
+          <img src="tatirex-raspberry.jpg" alt="Малина" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="padding:10px 12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:2px">🍇 Малина</div>
+          <div style="font-size:10px;color:var(--text3)">Ягодный · освежающий</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Когда принимать -->
+    <div style="padding:0 20px;margin-bottom:8px;font-family:var(--font-head);font-size:10px;font-weight:800;color:var(--text3);letter-spacing:.1em;text-transform:uppercase">Когда принимать</div>
+    <div style="margin:0 20px 16px;background:var(--bg3);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:34px;height:34px;background:rgba(200,240,96,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">💪</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:300;line-height:1.5">После тренировки — в течение 30 минут</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:34px;height:34px;background:rgba(200,240,96,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🏭</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:300;line-height:1.5">На работе когда нет белковой еды</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div style="width:34px;height:34px;background:rgba(200,240,96,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🌙</div>
+        <div style="font-size:12px;color:var(--text2);font-weight:300;line-height:1.5">Перед сном — медленная фракция работает ночью</div>
+      </div>
+    </div>
+
+    <!-- Кнопки -->
+    <div style="padding:0 20px;display:flex;flex-direction:column;gap:8px;margin-bottom:30px">
+      <button onclick="window.open('https://clck.ru/3RmEnP','_blank')"
+        style="width:100%;padding:14px;background:var(--accent);border:none;border-radius:40px;
+        color:#0d0d12;font-family:var(--font-head);font-size:14px;font-weight:800;cursor:pointer;
+        touch-action:manipulation">
+        🛒 Оформить заказ
+      </button>
+      <div style="display:flex;gap:8px">
+        <button onclick="window.open('https://vk.ru/tatirex','_blank')"
+          style="flex:1;padding:12px;background:var(--bg3);border:none;border-radius:40px;
+          color:var(--text2);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation">
+          ВКонтакте →
+        </button>
+        <button onclick="window.open('https://t.me/tatirex_pro','_blank')"
+          style="flex:1;padding:12px;background:var(--bg3);border:none;border-radius:40px;
+          color:var(--text2);font-family:var(--fb);font-size:12px;font-weight:600;cursor:pointer;touch-action:manipulation">
+          Telegram →
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
