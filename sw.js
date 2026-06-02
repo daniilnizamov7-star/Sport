@@ -1,5 +1,5 @@
-const CACHE = 'fitcore-v3';
-const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE = 'fitcore-v4';
+const ASSETS = ['/','/index.html','/manifest.json','/icon-192.png','/icon-512.png','tatirex-logotip.png','tatirex-chocolate.jpg','tatirex-strawberry.jpg','tatirex-milk.jpg','tatirex-cookie.jpg','tatirex-raspberry.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
