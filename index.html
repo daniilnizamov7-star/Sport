@@ -218,8 +218,34 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div class="screen" id="s-login">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px">
+    <div style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--accent);margin-bottom:4px">FitCore</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:40px">Войди чтобы продолжить</div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Номер телефона</div>
+      <input id="login-phone" type="tel" placeholder="+7 991 174-51-13"
+        style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'">
+    </div>
+    <div style="margin-bottom:28px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Пароль</div>
+      <input id="login-pass" type="password" placeholder="••••••••"
+        style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()" id="login-btn"
+      style="width:100%;padding:15px;background:var(--accent);color:#0d0d12;border:none;border-radius:40px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px">
+      Войти →
+    </button>
+    <div id="login-err" style="font-size:12px;color:#ff6b6b;text-align:center;min-height:18px"></div>
+  </div>
+</div>
+
 <!-- HOME -->
-<div class="screen" id="s-home">
+<div class="screen hidden" id="s-home">
   <div class="topbar">
     <h1>FitCore</h1>
     <div style="font-size:10px;color:var(--text3)">v0.2</div>
@@ -438,6 +464,95 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </nav>
 
 <script>
+// ======= SUPABASE =======
+const SB_URL = 'https://yiqipulgofoschkccaxr.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcWlwdWxnb2Zvc2Noa2NjYXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjExMjksImV4cCI6MjA4OTg5NzEyOX0.Op4iBjGSOBcKb4pkVSd75_l8Fle3Cz15nBh9KF21YhI';
+const SB_H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+
+async function sbGet(path) {
+  const r = await fetch(SB_URL+'/rest/v1/'+path, {headers:SB_H});
+  return r.json();
+}
+async function sbPost(path, body) {
+  const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'POST', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
+  return r.json();
+}
+async function sbPatch(path, body) {
+  const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'PATCH', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
+  return r.json();
+}
+
+// ======= AUTH =======
+let currentUser = null;
+
+async function doLogin() {
+  const phone = document.getElementById('login-phone').value.trim().replace(/\s/g,'');
+  const pass = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+  if (!phone || !pass) { err.textContent = 'Заполни оба поля'; return; }
+  btn.textContent = 'Вхожу...'; btn.disabled = true; err.textContent = '';
+  try {
+    const res = await sbGet(`fc_users?phone=eq.${encodeURIComponent(phone)}&password=eq.${encodeURIComponent(pass)}&select=*`);
+    if (!res || !res[0]) {
+      err.textContent = 'Неверный номер или пароль'; btn.textContent = 'Войти →'; btn.disabled = false; return;
+    }
+    currentUser = res[0];
+    localStorage.setItem('fc_user_id', currentUser.id);
+    localStorage.setItem('fc_user_phone', phone);
+    localStorage.setItem('fc_user_pass', pass);
+    // Загружаем прогресс из Supabase
+    await loadProgressFromSB();
+    enterApp();
+  } catch(e) {
+    // Оффлайн — пробуем localStorage
+    const savedId = localStorage.getItem('fc_user_id');
+    if (savedId) { enterApp(); } else { err.textContent = 'Нет соединения и нет сохранённого входа'; }
+    btn.textContent = 'Войти →'; btn.disabled = false;
+  }
+}
+
+async function loadProgressFromSB() {
+  if (!currentUser) return;
+  try {
+    const rows = await sbGet(`fc_progress?user_id=eq.${currentUser.id}&select=program_key,day_index`);
+    if (!rows || rows.error) return;
+    const mainDays = rows.filter(r=>r.program_key==='main').map(r=>r.day_index);
+    const backDays = rows.filter(r=>r.program_key==='back').map(r=>r.day_index);
+    const combinedDays = rows.filter(r=>r.program_key==='combined').map(r=>r.day_index);
+    if (mainDays.length > 0) { S.completed = mainDays; localStorage.setItem('fc_done', JSON.stringify(mainDays)); }
+    if (backDays.length > 0) { S.completedBack = backDays; localStorage.setItem('fc_done_back', JSON.stringify(backDays)); }
+    if (combinedDays.length > 0) { S.completedCombined = combinedDays; localStorage.setItem('fc_done_combined', JSON.stringify(combinedDays)); }
+  } catch(e) {}
+}
+
+async function saveProgressToSB(progKey, dayIndex) {
+  if (!currentUser) return;
+  try {
+    await sbPost('fc_progress', {user_id: currentUser.id, program_key: progKey, day_index: dayIndex});
+  } catch(e) {}
+}
+
+function enterApp() {
+  document.getElementById('s-login').classList.add('hidden');
+  document.getElementById('s-home').classList.remove('hidden');
+  S.cur = 's-home';
+  checkAndRestore();
+  initHome();
+}
+
+async function tryAutoLogin() {
+  const savedId = localStorage.getItem('fc_user_id');
+  const savedPhone = localStorage.getItem('fc_user_phone');
+  const savedPass = localStorage.getItem('fc_user_pass');
+  if (!savedId || !savedPhone || !savedPass) return false;
+  try {
+    const res = await sbGet(`fc_users?phone=eq.${encodeURIComponent(savedPhone)}&password=eq.${encodeURIComponent(savedPass)}&select=*`);
+    if (res && res[0]) { currentUser = res[0]; await loadProgressFromSB(); }
+  } catch(e) {}
+  return true;
+}
+
 // ======= DATA =======
 const EX = {
   vacuum:{name:"Вакуум лёжа",params:"3 × 30 сек",sets:3,dur:30,isTime:true,muscle:"Поперечная",
@@ -688,20 +803,43 @@ const PROGS = {
     ]
   }
 };
+
+// ======= COMBINED PROGRAM (чередование кор/спина без выходных) =======
+// Строим динамически из main и back
+function buildCombined() {
+  const mainDays = []; const backDays = [];
+  PROGS.main.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) mainDays.push(d); }));
+  PROGS.back.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) backDays.push(d); }));
+  const days = [];
+  const total = mainDays.length + backDays.length; // 35 + 16 = 51
+  let mi = 0, bi = 0, dayNum = 1;
+  while (mi < mainDays.length || bi < backDays.length) {
+    if (mi < mainDays.length) {
+      days.push({ ...mainDays[mi], combinedType: 'main', combinedIdx: mi, globalIdx: days.length });
+      mi++;
+    }
+    if (bi < backDays.length) {
+      days.push({ ...backDays[bi], combinedType: 'back', combinedIdx: bi, globalIdx: days.length });
+      bi++;
+    }
+  }
+  return days;
+}
+const COMBINED_DAYS = buildCombined(); // 51 день
+
 // ======= STATE =======
 let S = {
-  cur: 's-home',
+  cur: 's-login',
   stack: [],
-  prog: 'lower',
+  prog: 'combined',
   week: 0,
   activeEx: [],
-  // Active workout
   awEx: [], awIdx: 0, awSet: 1, awIsRest: false,
   awTimer: null, awSec: 0,
   workoutDone: false,
-  // Persistence
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
   completedBack: JSON.parse(localStorage.getItem('fc_done_back') || '[]'),
+  completedCombined: JSON.parse(localStorage.getItem('fc_done_combined') || '[]'),
 };
 
 // ======= STREAK (правильный расчёт) =======
@@ -797,42 +935,25 @@ function initHome() {
 function refreshHome() {
   const streak = calcStreak();
   document.getElementById('streak-txt').textContent = `${streak} ${plurDays(streak)} подряд`;
-  const total = S.completed.filter(d=>d).length;
-  const absDay = total % 56;
-  const wIdx = Math.floor(absDay / 7);
-  const dIdx = absDay % 7;
-  const prog = PROGS.main;
-  const week = prog.weeks[wIdx];
-  if (!week) return;
-  const day = week.days[dIdx];
+  const total = S.completedCombined.length;
+  const dayIdx = total % COMBINED_DAYS.length;
+  const day = COMBINED_DAYS[dayIdx];
   if (!day) return;
-  // Общий прогресс программы
-  const pct = Math.round((total / 56) * 100);
-  document.getElementById('today-tag').textContent = `Неделя ${wIdx+1} из 8 · День ${dIdx+1}`;
+  const typeLabel = day.combinedType === 'main' ? '💪 Кор' : '🧍 Спина и осанка';
+  document.getElementById('today-tag').textContent = `День ${total+1} из ${COMBINED_DAYS.length} · ${typeLabel}`;
   document.getElementById('today-title').textContent = day.t;
-  document.getElementById('today-meta').textContent = day.rest
-    ? (day.note || 'День отдыха — восстановление')
-    : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
+  document.getElementById('today-meta').textContent = `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
 }
 
 function openToday() {
-  const total = S.completed.filter(d=>d).length;
-  const prog = PROGS.main;
-  // Считаем абсолютный день (0-55 = 8 недель × 7 дней)
-  const absDay = total % 56;
-  const wIdx = Math.floor(absDay / 7);
-  const dIdx = absDay % 7;
-  const week = prog.weeks[wIdx];
-  if (!week) return;
-  const day = week.days[dIdx];
+  const total = S.completedCombined.length;
+  const dayIdx = total % COMBINED_DAYS.length;
+  const day = COMBINED_DAYS[dayIdx];
   if (!day) return;
-  if (day.rest) {
-    const note = day.note || 'Отдых — восстановление тоже часть программы.';
-    alert('Сегодня день отдыха!\n' + note);
-    return;
-  }
-  S.prog = 'main';
-  openDay(day, `Неделя ${wIdx+1} · ${day.t}`);
+  S.prog = day.combinedType;
+  S.currentCombinedIdx = dayIdx;
+  const typeLabel = day.combinedType === 'main' ? 'Кор' : 'Спина и осанка';
+  openDay(day, `День ${total+1} · ${typeLabel}`);
 }
 
 function plurDays(n) {
@@ -1063,22 +1184,23 @@ function nextStep() {
 }
 
 function finishActive() {
-  if (S.workoutDone) return; // guard от двойного вызова
+  if (S.workoutDone) return;
   S.workoutDone=true;
   stopTimer();
+  // Сохраняем в combined прогресс
+  const newIdx = S.completedCombined.length;
+  S.completedCombined.push(newIdx);
+  localStorage.setItem('fc_done_combined', JSON.stringify(S.completedCombined));
+  // Дублируем в старые массивы для совместимости
   const today = new Date().toDateString();
-  // Записываем в нужный массив в зависимости от программы
   if (S.prog === 'back') {
-    if (!S.completedBack.includes(today)) {
-      S.completedBack.push(today);
-      localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack));
-    }
+    if (!S.completedBack.includes(today)) { S.completedBack.push(today); localStorage.setItem('fc_done_back', JSON.stringify(S.completedBack)); }
   } else {
-    if (!S.completed.includes(today)) {
-      S.completed.push(today);
-      localStorage.setItem('fc_done', JSON.stringify(S.completed));
-    }
+    if (!S.completed.includes(today)) { S.completed.push(today); localStorage.setItem('fc_done', JSON.stringify(S.completed)); }
   }
+  // Сохраняем в Supabase
+  saveProgressToSB('combined', newIdx);
+  autoBackup();
   const msgsMain=[
     "Поперечная мышца получила нагрузку.\nВозвращайся завтра.",
     "Отличная работа. Косые благодарят.\nПродолжай без пропусков.",
@@ -1249,8 +1371,16 @@ function checkAndRestore() {
 }
 
 // ======= INIT =======
-checkAndRestore();
-initHome();
+// ======= INIT =======
+(async function() {
+  const hasLocal = localStorage.getItem('fc_user_id');
+  if (hasLocal) {
+    const ok = await tryAutoLogin();
+    if (ok) { enterApp(); return; }
+  }
+  // Показываем экран входа
+  document.getElementById('s-login').classList.remove('hidden');
+})();
 </script>
 
 <!-- NUTRITION SCREEN -->
