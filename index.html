@@ -250,7 +250,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="screen hidden" id="s-home">
   <div class="topbar">
     <h1>FitCore</h1>
-    <div style="font-size:10px;color:var(--text3)">v0.2</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:10px;color:var(--text3)">v0.4</div>
+      <button onclick="doLogout()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--bg4)">Выйти</button>
+    </div>
   </div>
   <div class="scroll-area">
     <div class="hero">
@@ -612,6 +615,28 @@ function enterApp() {
   S.cur = 's-home';
   checkAndRestore();
   initHome();
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('fc_user_id');
+  localStorage.removeItem('fc_user_phone');
+  localStorage.removeItem('fc_user_pass');
+  localStorage.removeItem('fc_user_program');
+  localStorage.removeItem('fc_user_program_key');
+  localStorage.removeItem('fc_done_combined');
+  S.completedCombined = [];
+  USER_PROGRAM = null;
+  // Показываем экран входа
+  ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition','s-partner'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('hidden'); el.classList.remove('slide-left'); }
+  });
+  document.getElementById('s-login').classList.remove('hidden');
+  document.getElementById('login-phone').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+  S.cur = 's-login';
 }
 
 async function tryAutoLogin() {
