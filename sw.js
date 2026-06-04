@@ -1,5 +1,5 @@
-const CACHE = 'fitcore-v5';
-const ASSETS = ['/','/index.html','/manifest.json','/icon-192.png','/icon-512.png','tatirex-logotip.png','tatirex-chocolate.jpg','tatirex-strawberry.jpg','tatirex-milk.jpg','tatirex-cookie.jpg','tatirex-raspberry.jpg'];
+const CACHE = 'fitcore-v4';
+const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -9,43 +9,31 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  // Network-first для index.html — всегда пробуем получить свежую версию
-  if (e.request.url.includes('index.html') || e.request.url.endsWith('/')) {
-    e.respondWith(
-      fetch(e.request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
+  const url = new URL(e.request.url);
+  
+  // Supabase запросы — всегда через сеть, никогда из кэша
+  if (url.hostname.includes('supabase.co')) {
+    e.respondWith(fetch(e.request));
     return;
   }
-  // Cache-first для остальных ресурсов
+  
+  // Остальное — network first, fallback cache
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (res && res.status === 200) {
+    fetch(e.request)
+      .then(res => {
+        if (res.ok && e.request.method === 'GET') {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => caches.match('/index.html'));
-    })
+      })
+      .catch(() => caches.match(e.request))
   );
-});
-
-// Сообщение от клиента — принудительное обновление
-self.addEventListener('message', e => {
-  if (e.data === 'skipWaiting') self.skipWaiting();
 });
