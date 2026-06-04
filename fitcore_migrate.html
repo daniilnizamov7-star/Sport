@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitCore — Миграция данных</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d0d12; color: #f0f0f0; font-family: -apple-system, sans-serif; padding: 24px 20px; min-height: 100vh; }
+  h1 { font-size: 22px; font-weight: 800; color: #c8f060; margin-bottom: 6px; }
+  p.sub { font-size: 13px; color: #9090a8; margin-bottom: 28px; }
+  .card { background: #1a1a24; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .card h2 { font-size: 14px; font-weight: 700; color: #c8f060; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  label { display: block; font-size: 13px; color: #9090a8; margin-bottom: 6px; }
+  input { width: 100%; background: #22222e; border: 1px solid #33333f; border-radius: 10px; padding: 12px 14px; color: #f0f0f0; font-size: 15px; outline: none; margin-bottom: 14px; }
+  input:focus { border-color: #c8f060; }
+  .btn { width: 100%; background: #c8f060; color: #0d0d12; border: none; border-radius: 12px; padding: 15px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .log { background: #13131a; border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.8; min-height: 80px; color: #9090a8; white-space: pre-wrap; }
+  .ok { color: #c8f060; }
+  .err { color: #ff6b6b; }
+  .info { color: #60b8f0; }
+  .data-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #22222e; font-size: 13px; }
+  .data-row:last-child { border-bottom: none; }
+  .data-val { color: #c8f060; font-weight: 600; }
+  .empty { color: #5a5a72; font-style: italic; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>FitCore Migration</h1>
+<p class="sub">Перенос данных из приложения в облако. Открой эту страницу на том же устройстве, где использовал FitCore.</p>
+
+<!-- Шаг 1: Данные в localStorage -->
+<div class="card">
+  <h2>📱 Данные на устройстве</h2>
+  <div id="local-data"><span class="empty">Читаю...</span></div>
+</div>
+
+<!-- Шаг 2: Создать аккаунт -->
+<div class="card">
+  <h2>👤 Создать аккаунт</h2>
+  <label>Имя</label>
+  <input type="text" id="inp-name" placeholder="Даниил" />
+  <label>Номер телефона (логин)</label>
+  <input type="tel" id="inp-phone" placeholder="+7 991 174-51-13" />
+  <label>Пароль</label>
+  <input type="password" id="inp-pass" placeholder="Придумай пароль" />
+  <label>Программа</label>
+  <select id="inp-prog" style="width:100%;background:#22222e;border:1px solid #33333f;border-radius:10px;padding:12px 14px;color:#f0f0f0;font-size:15px;outline:none;margin-bottom:14px;">
+    <option value="main">Основная (нижний кор + боковые)</option>
+    <option value="back">Спина (исправление осанки)</option>
+    <option value="postpartum_female">После родов (женская)</option>
+  </select>
+  <button class="btn" id="btn-migrate" onclick="doMigrate()">Создать аккаунт и перенести данные</button>
+</div>
+
+<!-- Лог -->
+<div class="card">
+  <h2>📋 Лог</h2>
+  <div class="log" id="log">Жду начала миграции...</div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yiqipulgofoschkccaxr.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcWlwdWxnb2Zvc2Noa2NjYXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjExMjksImV4cCI6MjA4OTg5NzEyOX0.Op4iBjGSOBcKh4pkVSd75_l8Fle3Cz15nBh9KF21YhI';
+
+const H = { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY };
+
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  el.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function sb(path, method = 'GET', body = null) {
+  return fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    method, headers: { ...H, 'Prefer': method === 'POST' ? 'return=representation' : '' },
+    body: body ? JSON.stringify(body) : null
+  }).then(r => r.json());
+}
+
+// Читаем localStorage
+function readLocal() {
+  const done = JSON.parse(localStorage.getItem('fc_done') || '[]');
+  const doneBack = JSON.parse(localStorage.getItem('fc_done_back') || '[]');
+  const backup = localStorage.getItem('fc_backup');
+  return { done, doneBack, backup: backup ? JSON.parse(backup) : null };
+}
+
+// Показываем что нашли
+window.onload = function() {
+  const data = readLocal();
+  const el = document.getElementById('local-data');
+  
+  const rows = [
+    ['Выполнено тренировок (основная)', data.done.length],
+    ['Выполнено тренировок (спина)', data.doneBack.length],
+    ['Резервная копия', data.backup ? '✓ есть' : '— нет'],
+  ];
+
+  if (data.done.length === 0 && data.doneBack.length === 0) {
+    el.innerHTML = '<span class="empty">Данных о тренировках не найдено — либо ты ещё не тренировался, либо открыл не на том устройстве.</span>';
+  } else {
+    el.innerHTML = rows.map(([k, v]) =>
+      `<div class="data-row"><span>${k}</span><span class="data-val">${v}</span></div>`
+    ).join('');
+  }
+};
+
+async function doMigrate() {
+  const name = document.getElementById('inp-name').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim().replace(/\s/g, '');
+  const pass = document.getElementById('inp-pass').value.trim();
+  const prog = document.getElementById('inp-prog').value;
+
+  if (!name || !phone || !pass) { alert('Заполни все поля'); return; }
+
+  const btn = document.getElementById('btn-migrate');
+  btn.disabled = true;
+  document.getElementById('log').innerHTML = '';
+
+  log('Начинаем миграцию...', 'info');
+
+  // 1. Создаём пользователя
+  log('Создаю аккаунт...', 'info');
+  const userRes = await sb('fc_users', 'POST', {
+    name, phone, password: pass, program_key: prog, profile: {}
+  });
+
+  if (userRes.error || !userRes[0]) {
+    if (userRes.error?.code === '23505') {
+      log('❌ Номер уже зарегистрирован. Попробуй другой номер.', 'err');
+    } else {
+      log('❌ Ошибка создания аккаунта: ' + JSON.stringify(userRes.error), 'err');
+    }
+    btn.disabled = false;
+    return;
+  }
+
+  const userId = userRes[0].id;
+  log(`✅ Аккаунт создан (ID: ${userId.slice(0,8)}...)`, 'ok');
+
+  // 2. Переносим прогресс
+  const data = readLocal();
+  let migrated = 0;
+
+  if (data.done.length > 0) {
+    log(`Переношу ${data.done.length} тренировок основной программы...`, 'info');
+    for (const dayIdx of data.done) {
+      await sb('fc_progress', 'POST', {
+        user_id: userId, program_key: 'main', day_index: dayIdx
+      });
+      migrated++;
+    }
+    log(`✅ Основная программа: ${data.done.length} тренировок перенесено`, 'ok');
+  }
+
+  if (data.doneBack.length > 0) {
+    log(`Переношу ${data.doneBack.length} тренировок программы спина...`, 'info');
+    for (const dayIdx of data.doneBack) {
+      await sb('fc_progress', 'POST', {
+        user_id: userId, program_key: 'back', day_index: dayIdx
+      });
+      migrated++;
+    }
+    log(`✅ Программа спина: ${data.doneBack.length} тренировок перенесено`, 'ok');
+  }
+
+  if (migrated === 0) {
+    log('ℹ️ Тренировок для переноса не найдено — аккаунт создан чистым', 'info');
+  }
+
+  // 3. Сохраняем user_id локально (для перехода)
+  localStorage.setItem('fc_user_id', userId);
+  localStorage.setItem('fc_user_name', name);
+  localStorage.setItem('fc_user_phone', phone);
+  localStorage.setItem('fc_user_prog', prog);
+
+  log('', '');
+  log(`🎉 Готово! Аккаунт создан, данные перенесены.`, 'ok');
+  log(`Имя: ${name}`, 'ok');
+  log(`Телефон: ${phone}`, 'ok');
+  log(`Программа: ${prog}`, 'ok');
+  log(`Перенесено тренировок: ${migrated}`, 'ok');
+  log('', '');
+  log('Теперь можно обновить FitCore до версии с авторизацией.', 'info');
+}
+</script>
+</body>
+</html>
