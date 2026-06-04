@@ -693,6 +693,72 @@ const EX = {
     steps:[{t:"Полувыпад: переднее колено над стопой, заднее колено на полу"},{t:"<strong>Подай таз вперёд и вниз</strong> — не прогибая поясницу"},{t:"Почувствуй растяжение в передней части заднего бедра"},{t:"Дышите спокойно 30 секунд, смените ногу"}],
     mistakes:["Прогиб в пояснице — нейтральный таз","Нет ощущения растяжки — подай таз сильнее","Меньше 30 секунд — нужно время"],
     zone:"lower"},
+  pullUp: {
+    name: 'Подтягивания', zone: 'back', sets: '3–4', reps: 'максимум',
+    steps: [
+      'Возьмись за турник хватом чуть шире плеч, руки прямые, тело висит свободно.',
+      'На выдохе подтянись — подбородок выше перекладины, сводя лопатки вниз и назад.',
+      'Медленно опустись на 3 счёта, полностью выпрямив руки внизу.',
+      'Если не можешь — начни с негативных: запрыгни наверх, медленно опускайся.'
+    ],
+    mistakes: ['Раскачка телом — читинг', 'Не доводить руки до конца внизу', 'Шея тянется к перекладине'],
+    isTime: false
+  },
+  australianPullUp: {
+    name: 'Австралийские подтягивания', zone: 'back', sets: '3', reps: '10–15',
+    steps: [
+      'Лёжа под низкой перекладиной (или столом), возьмись хватом на ширине плеч.',
+      'Тело прямое как доска от пяток до головы — напряги кор и ягодицы.',
+      'Подтяни грудь к перекладине, сводя лопатки вместе.',
+      'Медленно вернись в исходное положение — руки полностью прямые.'
+    ],
+    mistakes: ['Таз провисает вниз', 'Только руки работают без спины', 'Рывок вместо тяги'],
+    isTime: false
+  },
+  pushUp: {
+    name: 'Отжимания', zone: 'back', sets: '3–4', reps: '8–15',
+    steps: [
+      'Упор лёжа: руки чуть шире плеч, тело прямое, взгляд в пол.',
+      'На вдохе опустись — грудь почти касается пола, локти под 45° к телу.',
+      'На выдохе резко оттолкнись — полностью выпрями руки наверху.',
+      'Если сложно — с колен. Если легко — ноги на возвышении.'
+    ],
+    mistakes: ['Таз поднят вверх', 'Локти в стороны под 90°', 'Неполная амплитуда'],
+    isTime: false
+  },
+  superman: {
+    name: 'Супермен', zone: 'back', sets: '3', reps: '12–15',
+    steps: [
+      'Лёжа на животе, руки вытянуты вперёд, ноги прямые.',
+      'Одновременно подними руки и ноги от пола — сожми ягодицы.',
+      'Удержи 2–3 секунды в верхней точке, чувствуй работу поясницы.',
+      'Медленно опустись — не бросай.'
+    ],
+    mistakes: ['Шея задирается вверх', 'Только руки или только ноги', 'Задержка дыхания'],
+    isTime: false
+  },
+  negPullUp: {
+    name: 'Негативные подтягивания', zone: 'back', sets: '3', reps: '5–8',
+    steps: [
+      'Запрыгни в верхнюю точку подтягивания — подбородок над перекладиной.',
+      'Медленно опускайся на 5–8 счётов — контролируй каждый сантиметр.',
+      'Внизу — руки полностью прямые. Снова запрыгни.',
+      'Это лучший способ научиться подтягиваться.'
+    ],
+    mistakes: ['Падать быстро вниз — нет смысла', 'Раскачка при прыжке', 'Согнутые ноги'],
+    isTime: false
+  },
+  pushUpKnees: {
+    name: 'Отжимания с колен', zone: 'back', sets: '3', reps: '10–15',
+    steps: [
+      'Колени на полу, руки чуть шире плеч, тело прямое от колен до головы.',
+      'Опустись — грудь почти касается пола, локти под углом 45°.',
+      'Оттолкнись вверх, полностью выпрями руки.',
+      'Когда сделаешь 15 легко — переходи на полные отжимания.'
+    ],
+    mistakes: ['Таз выше плеч', 'Только до середины', 'Локти в стороны'],
+    isTime: false
+  },
   catCow:{name:"Кошка-корова",params:"2 × 10 циклов",sets:2,reps:10,isTime:false,muscle:"Позвоночник",
     tags:["позвоночник","разминка","осанка"],
     about:"Мобилизация всего позвоночника. Снимает зажим после стоячей/сидячей работы, восстанавливает нейтральное положение. Обязательно перед всеми упражнениями на спину.",
@@ -872,6 +938,44 @@ const PROGS = {
         { t: "День 5 — Финальный максимум", ex: ["catCow","gluteBridge","birdDog","wallAngel","thoracicRotation","chestStretch"], min: 28 },
         { t: "День 6 — Отдых", rest: true },
         { t: "День 7 — Замер осанки", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      ]},
+
+      // ── СИЛОВОЙ БЛОК (НЕДЕЛИ 5–8) ──
+      { title: "Неделя 5", days: [
+        { t: "День 1 — Знакомство с силой", ex: ["catCow","australianPullUp","pushUpKnees","superman","gluteBridge"], min: 25 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Тяга + жим", ex: ["australianPullUp","pushUpKnees","birdDog","wallAngel","superman"], min: 28 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Силовой базовый", ex: ["australianPullUp","pushUpKnees","gluteBridge","superman","chestStretch"], min: 30 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      ]},
+      { title: "Неделя 6", days: [
+        { t: "День 1 — Негативные подтягивания", ex: ["negPullUp","australianPullUp","pushUpKnees","superman","birdDog"], min: 30 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Тяга + осанка", ex: ["negPullUp","australianPullUp","wallAngel","thoracicRotation","superman"], min: 30 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Сила + спина", ex: ["negPullUp","pushUpKnees","gluteBridge","birdDog","chestStretch"], min: 32 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      ]},
+      { title: "Неделя 7", days: [
+        { t: "День 1 — Первые подтягивания", ex: ["pullUp","australianPullUp","pushUp","superman","gluteBridge"], min: 32 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Сила + осанка", ex: ["pullUp","australianPullUp","wallAngel","thoracicRotation","superman"], min: 32 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Пик силы", ex: ["pullUp","pushUp","gluteBridge","birdDog","superman","chestStretch"], min: 35 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Растяжка", ex: ["catCow","chestStretch","hipFlexorStretch","thoracicRotation"], min: 15 }
+      ]},
+      { title: "Неделя 8", days: [
+        { t: "День 1 — Финальная сила", ex: ["pullUp","australianPullUp","pushUp","superman","wallAngel"], min: 35 },
+        { t: "День 2 — Отдых", rest: true },
+        { t: "День 3 — Максимум тяги", ex: ["pullUp","australianPullUp","birdDog","thoracicRotation","superman"], min: 35 },
+        { t: "День 4 — Отдых", rest: true },
+        { t: "День 5 — Финал программы", ex: ["pullUp","pushUp","australianPullUp","gluteBridge","superman","chestStretch"], min: 38 },
+        { t: "День 6 — Отдых", rest: true },
+        { t: "День 7 — Замер силы и осанки", ex: ["pullUp","pushUp","catCow","chestStretch","hipFlexorStretch"], min: 20 }
       ]}
     ]
   }
@@ -880,19 +984,32 @@ const PROGS = {
 // ======= COMBINED PROGRAM (чередование кор/спина без выходных) =======
 // Строим динамически из main и back
 function buildCombined() {
-  const mainDays = []; const backDays = [];
-  PROGS.main.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) mainDays.push(d); }));
-  PROGS.back.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) backDays.push(d); }));
-  // Строгое чередование — останавливаемся когда заканчивается меньший список
-  const minLen = Math.min(mainDays.length, backDays.length); // 16 пар
+  // Берём ВСЕ дни обеих программ включая отдых
+  const mainDays = [];
+  const backDays = [];
+  PROGS.main.weeks.forEach(w => w.days.forEach(d => mainDays.push(d)));
+  PROGS.back.weeks.forEach(w => w.days.forEach(d => backDays.push(d)));
+  // mainDays = 56 дней, backDays = 28 дней
+  // Накладываем: день отдыха main → заменяем тренировкой back и наоборот
+  // Схема 7 дней: main[0], back[0], main[2], back[2], main[4], back[4], main[6]...
+  // То есть чётные дни недели = main, нечётные = back (пропуская отдыхи)
   const days = [];
-  for (let i = 0; i < minLen; i++) {
-    days.push({ ...mainDays[i], combinedType: 'main', combinedIdx: i, globalIdx: days.length });
-    days.push({ ...backDays[i], combinedType: 'back', combinedIdx: i, globalIdx: days.length });
-  }
-  // Добавляем оставшиеся дни main (35-16=19 дней) после завершения back
-  for (let i = minLen; i < mainDays.length; i++) {
-    days.push({ ...mainDays[i], combinedType: 'main', combinedIdx: i, globalIdx: days.length });
+  let bi = 0; // индекс в backDays
+  for (let i = 0; i < mainDays.length; i++) {
+    const md = mainDays[i];
+    if (!md.rest) {
+      // Тренировочный день main — оставляем
+      days.push({ ...md, combinedType: 'main', globalIdx: days.length });
+    } else {
+      // День отдыха main — заменяем тренировкой back
+      // Ищем следующий тренировочный день back
+      while (bi < backDays.length && backDays[bi].rest) bi++;
+      if (bi < backDays.length) {
+        days.push({ ...backDays[bi], combinedType: 'back', globalIdx: days.length });
+        bi++;
+      }
+      // Если back закончился — пропускаем (отдых)
+    }
   }
   return days;
 }
@@ -1023,10 +1140,13 @@ function refreshHome() {
   const dayIdx = total % getActiveDays().length;
   const day = getActiveDays()[dayIdx];
   if (!day) return;
-  const typeLabel = day.combinedType === 'main' ? '💪 Кор' : '🧍 Спина и осанка';
+  const isRest = day.combinedType === 'rest' || day.rest;
+  const typeLabel = day.combinedType === 'main' ? '💪 Кор' : day.combinedType === 'back' ? '🧍 Спина и осанка' : '😴 Отдых';
   document.getElementById('today-tag').textContent = `День ${total+1} из ${getActiveDays().length} · ${typeLabel}`;
   document.getElementById('today-title').textContent = day.t;
-  document.getElementById('today-meta').textContent = `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
+  document.getElementById('today-meta').textContent = isRest
+    ? (day.note || 'День отдыха — восстановление')
+    : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
 }
 
 function openToday() {
@@ -1034,7 +1154,17 @@ function openToday() {
   const dayIdx = total % getActiveDays().length;
   const day = getActiveDays()[dayIdx];
   if (!day) return;
-  S.prog = day.combinedType;
+  // С новой логикой buildCombined отдыхов быть не должно
+  // но на случай если остались — пропускаем автоматически
+  if (day.combinedType === 'rest' || day.rest) {
+    const newIdx = S.completedCombined.length;
+    S.completedCombined.push(newIdx);
+    localStorage.setItem('fc_done_combined', JSON.stringify(S.completedCombined));
+    saveProgressToSB('combined', newIdx);
+    refreshHome();
+    return;
+  }
+  S.prog = day.combinedType === 'back' ? 'back' : 'main';
   S.currentCombinedIdx = dayIdx;
   const typeLabel = day.combinedType === 'main' ? 'Кор' : 'Спина и осанка';
   openDay(day, `День ${total+1} · ${typeLabel}`);
