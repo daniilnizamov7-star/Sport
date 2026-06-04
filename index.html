@@ -480,12 +480,11 @@ async function sbGet(path) {
 }
 
 async function sbFind(table, filters) {
-  // Фильтры через заголовки — надёжнее для спецсимволов типа +
-  const headers = {...SB_H};
-  Object.entries(filters).forEach(([k,v]) => {
-    headers[k] = `eq.${v}`;
-  });
-  const r = await fetch(SB_URL+'/rest/v1/'+table+'?select=*', {headers});
+  // Фильтры через query string с правильным кодированием
+  const params = Object.entries(filters)
+    .map(([k,v]) => `${k}=eq.${encodeURIComponent(v)}`)
+    .join('&');
+  const r = await fetch(SB_URL+'/rest/v1/'+table+'?select=*&'+params, {headers: SB_H});
   return r.json();
 }
 async function sbPost(path, body) {
