@@ -222,27 +222,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div class="screen" id="s-login">
   <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px 24px">
     <div style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--accent);margin-bottom:4px">FitCore</div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:40px">Войди чтобы продолжить</div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Номер телефона</div>
-      <input id="login-phone" type="tel" placeholder="+7 991 174-51-13"
-        style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'">
-    </div>
-    <div style="margin-bottom:28px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Пароль</div>
-      <input id="login-pass" type="password" placeholder="••••••••"
-        style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'"
-        onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:40px">Закрытый клуб · Войди по паролю</div>
+
+    <!-- Поля входа -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Номер телефона</div>
+        <input id="login-phone" type="tel" placeholder="+79911745113"
+          style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'">
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em">Пароль</div>
+        <input id="login-pass" type="password" placeholder="••••••••"
+          style="width:100%;background:var(--bg3);border:1px solid var(--bg4);border-radius:12px;padding:13px 16px;color:var(--text);font-size:15px;outline:none;font-family:var(--font-body)"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--bg4)'"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
     <button onclick="doLogin()" id="login-btn"
-      style="width:100%;padding:15px;background:var(--accent);color:#0d0d12;border:none;border-radius:40px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px">
-      Войти →
-    </button>
-    <div id="login-err" style="font-size:12px;color:#ff6b6b;text-align:center;min-height:18px"></div>
+        style="width:100%;padding:15px;background:var(--accent);color:#0d0d12;border:none;border-radius:40px;font-family:var(--font-head);font-size:15px;font-weight:800;cursor:pointer;margin-bottom:12px">
+        Войти →
+      </button>
+    </div>
+    </div>
   </div>
-</div>
 
 <!-- HOME -->
 <div class="screen hidden" id="s-home">
@@ -515,14 +517,22 @@ async function doLogin() {
 async function loadProgressFromSB() {
   if (!currentUser) return;
   try {
+    // Грузим программу пользователя
+    const progRes = await sbGet(`fc_programs?user_id=eq.${currentUser.id}&select=days,title,program_key&limit=1`);
+    if (progRes && progRes[0] && progRes[0].days) {
+      USER_PROGRAM = progRes[0].days;
+      USER_PROGRAM_KEY = progRes[0].program_key;
+      localStorage.setItem('fc_user_program', JSON.stringify(USER_PROGRAM));
+      localStorage.setItem('fc_user_program_key', USER_PROGRAM_KEY);
+    }
+    // Грузим прогресс
     const rows = await sbGet(`fc_progress?user_id=eq.${currentUser.id}&select=program_key,day_index`);
     if (!rows || rows.error) return;
-    const mainDays = rows.filter(r=>r.program_key==='main').map(r=>r.day_index);
-    const backDays = rows.filter(r=>r.program_key==='back').map(r=>r.day_index);
-    const combinedDays = rows.filter(r=>r.program_key==='combined').map(r=>r.day_index);
-    if (mainDays.length > 0) { S.completed = mainDays; localStorage.setItem('fc_done', JSON.stringify(mainDays)); }
-    if (backDays.length > 0) { S.completedBack = backDays; localStorage.setItem('fc_done_back', JSON.stringify(backDays)); }
-    if (combinedDays.length > 0) { S.completedCombined = combinedDays; localStorage.setItem('fc_done_combined', JSON.stringify(combinedDays)); }
+    const combinedDays = rows.filter(r=>r.program_key==='combined'||r.program_key===USER_PROGRAM_KEY).map(r=>r.day_index);
+    if (combinedDays.length > 0) {
+      S.completedCombined = combinedDays;
+      localStorage.setItem('fc_done_combined', JSON.stringify(combinedDays));
+    }
   } catch(e) {}
 }
 
@@ -531,6 +541,55 @@ async function saveProgressToSB(progKey, dayIndex) {
   try {
     await sbPost('fc_progress', {user_id: currentUser.id, program_key: progKey, day_index: dayIndex});
   } catch(e) {}
+}
+
+function authTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('auth-fields-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('auth-fields-reg').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-subtitle').textContent = isLogin ? 'Войди чтобы продолжить' : 'Создай аккаунт бесплатно';
+  document.getElementById('tab-login-btn').style.background = isLogin ? 'var(--accent)' : 'transparent';
+  document.getElementById('tab-login-btn').style.color = isLogin ? '#0d0d12' : 'var(--text3)';
+  document.getElementById('tab-reg-btn').style.background = isLogin ? 'transparent' : 'var(--accent)';
+  document.getElementById('tab-reg-btn').style.color = isLogin ? 'var(--text3)' : '#0d0d12';
+  document.getElementById('login-err').textContent = '';
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim().replace(/\s/g,'');
+  const pass = document.getElementById('reg-pass').value.trim();
+  const prog = document.getElementById('reg-prog').value;
+  const startDay = parseInt(document.getElementById('reg-startday').value) || 1;
+  const err = document.getElementById('login-err');
+  const btn = document.getElementById('reg-btn');
+  if (!name || !phone || !pass) { err.textContent = 'Заполни все поля'; return; }
+  btn.textContent = 'Создаю...'; btn.disabled = true; err.textContent = '';
+  try {
+    const res = await sbPost('fc_users', {name, phone, password: pass, program_key: prog, profile: {}});
+    if (!res || !res[0]) {
+      if (res?.error?.code === '23505') err.textContent = 'Этот номер уже зарегистрирован';
+      else err.textContent = 'Ошибка: ' + (res?.error?.message || 'попробуй ещё раз');
+      btn.textContent = 'Создать аккаунт →'; btn.disabled = false; return;
+    }
+    currentUser = res[0];
+    localStorage.setItem('fc_user_id', currentUser.id);
+    localStorage.setItem('fc_user_phone', phone);
+    localStorage.setItem('fc_user_pass', pass);
+    // Если указан день > 1 — заносим предыдущие дни как выполненные
+    if (startDay > 1) {
+      const daysToAdd = Math.min(startDay - 1, COMBINED_DAYS.length);
+      for (let i = 0; i < daysToAdd; i++) {
+        await sbPost('fc_progress', {user_id: currentUser.id, program_key: 'combined', day_index: i});
+        S.completedCombined.push(i);
+      }
+      localStorage.setItem('fc_done_combined', JSON.stringify(S.completedCombined));
+    }
+    enterApp();
+  } catch(e) {
+    err.textContent = 'Нет соединения. Проверь интернет.';
+    btn.textContent = 'Создать аккаунт →'; btn.disabled = false;
+  }
 }
 
 function enterApp() {
@@ -810,24 +869,31 @@ function buildCombined() {
   const mainDays = []; const backDays = [];
   PROGS.main.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) mainDays.push(d); }));
   PROGS.back.weeks.forEach(w => w.days.forEach(d => { if (!d.rest) backDays.push(d); }));
+  // Строгое чередование — останавливаемся когда заканчивается меньший список
+  const minLen = Math.min(mainDays.length, backDays.length); // 16 пар
   const days = [];
-  const total = mainDays.length + backDays.length; // 35 + 16 = 51
-  let mi = 0, bi = 0, dayNum = 1;
-  while (mi < mainDays.length || bi < backDays.length) {
-    if (mi < mainDays.length) {
-      days.push({ ...mainDays[mi], combinedType: 'main', combinedIdx: mi, globalIdx: days.length });
-      mi++;
-    }
-    if (bi < backDays.length) {
-      days.push({ ...backDays[bi], combinedType: 'back', combinedIdx: bi, globalIdx: days.length });
-      bi++;
-    }
+  for (let i = 0; i < minLen; i++) {
+    days.push({ ...mainDays[i], combinedType: 'main', combinedIdx: i, globalIdx: days.length });
+    days.push({ ...backDays[i], combinedType: 'back', combinedIdx: i, globalIdx: days.length });
+  }
+  // Добавляем оставшиеся дни main (35-16=19 дней) после завершения back
+  for (let i = minLen; i < mainDays.length; i++) {
+    days.push({ ...mainDays[i], combinedType: 'main', combinedIdx: i, globalIdx: days.length });
   }
   return days;
 }
 const COMBINED_DAYS = buildCombined(); // 51 день
 
 // ======= STATE =======
+// Программа пользователя — грузится из Supabase, fallback на COMBINED_DAYS
+let USER_PROGRAM = JSON.parse(localStorage.getItem('fc_user_program') || 'null');
+let USER_PROGRAM_KEY = localStorage.getItem('fc_user_program_key') || 'combined';
+
+// Активная программа — либо из Supabase, либо встроенная
+function getActiveDays() {
+  return USER_PROGRAM || COMBINED_DAYS;
+}
+
 let S = {
   cur: 's-login',
   stack: [],
@@ -889,6 +955,10 @@ function showNav(show) {
 }
 
 function switchTab(tab) {
+  if (!localStorage.getItem('fc_user_id')) {
+    document.getElementById('s-login').classList.remove('hidden');
+    return;
+  }
   stopTimer();
   // Скрываем всё
   ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition','s-partner'].forEach(id => {
@@ -936,19 +1006,19 @@ function refreshHome() {
   const streak = calcStreak();
   document.getElementById('streak-txt').textContent = `${streak} ${plurDays(streak)} подряд`;
   const total = S.completedCombined.length;
-  const dayIdx = total % COMBINED_DAYS.length;
-  const day = COMBINED_DAYS[dayIdx];
+  const dayIdx = total % getActiveDays().length;
+  const day = getActiveDays()[dayIdx];
   if (!day) return;
   const typeLabel = day.combinedType === 'main' ? '💪 Кор' : '🧍 Спина и осанка';
-  document.getElementById('today-tag').textContent = `День ${total+1} из ${COMBINED_DAYS.length} · ${typeLabel}`;
+  document.getElementById('today-tag').textContent = `День ${total+1} из ${getActiveDays().length} · ${typeLabel}`;
   document.getElementById('today-title').textContent = day.t;
   document.getElementById('today-meta').textContent = `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
 }
 
 function openToday() {
   const total = S.completedCombined.length;
-  const dayIdx = total % COMBINED_DAYS.length;
-  const day = COMBINED_DAYS[dayIdx];
+  const dayIdx = total % getActiveDays().length;
+  const day = getActiveDays()[dayIdx];
   if (!day) return;
   S.prog = day.combinedType;
   S.currentCombinedIdx = dayIdx;
