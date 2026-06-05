@@ -1033,36 +1033,52 @@ const PROGS = {
 // ======= COMBINED PROGRAM (чередование кор/спина без выходных) =======
 // Строим динамически из main и back
 function buildCombined() {
-  // Берём ВСЕ дни обеих программ включая отдых
-  const mainDays = [];
-  const backDays = [];
-  PROGS.main.weeks.forEach(w => w.days.forEach(d => mainDays.push(d)));
-  PROGS.back.weeks.forEach(w => w.days.forEach(d => backDays.push(d)));
-  // mainDays = 56 дней, backDays = 28 дней
-  // Накладываем: день отдыха main → заменяем тренировкой back и наоборот
-  // Схема 7 дней: main[0], back[0], main[2], back[2], main[4], back[4], main[6]...
-  // То есть чётные дни недели = main, нечётные = back (пропуская отдыхи)
+  // Недели 3,5,7 (индексы 2,4,6) — наложение день в день
+  // Остальные недели — чередование 4+4 = 8 дней
+  const overlayWeeks = [2, 4, 6];
   const days = [];
-  let bi = 0; // индекс в backDays
-  for (let i = 0; i < mainDays.length; i++) {
-    const md = mainDays[i];
-    if (!md.rest) {
-      // Тренировочный день main — оставляем
-      days.push({ ...md, combinedType: 'main', globalIdx: days.length });
-    } else {
-      // День отдыха main — заменяем тренировкой back
-      // Ищем следующий тренировочный день back
-      while (bi < backDays.length && backDays[bi].rest) bi++;
-      if (bi < backDays.length) {
-        days.push({ ...backDays[bi], combinedType: 'back', globalIdx: days.length });
-        bi++;
+
+  PROGS.main.weeks.forEach((mainWeek, wi) => {
+    const backWeek = PROGS.back.weeks[wi];
+    if (!backWeek) return;
+
+    if (overlayWeeks.includes(wi)) {
+      // Наложение: накладываем день в день
+      for (let di = 0; di < 7; di++) {
+        const md = mainWeek.days[di];
+        const bd = backWeek.days[di];
+        if (md.rest && bd.rest) {
+          days.push({ t: 'Отдых', rest: true, combinedType: 'rest', globalIdx: days.length });
+        } else if (!md.rest && bd.rest) {
+          days.push({ ...md, combinedType: 'main', globalIdx: days.length });
+        } else if (md.rest && !bd.rest) {
+          days.push({ ...bd, combinedType: 'back', globalIdx: days.length });
+        } else {
+          days.push({
+            t: md.t + ' + ' + bd.t,
+            ex: [...(md.ex||[]), ...(bd.ex||[])],
+            min: (md.min||15) + (bd.min||15),
+            combinedType: 'both',
+            mainDay: { t: md.t, ex: md.ex||[], min: md.min||15 },
+            backDay: { t: bd.t, ex: bd.ex||[], min: bd.min||15 },
+            globalIdx: days.length
+          });
+        }
       }
-      // Если back закончился — пропускаем (отдых)
+    } else {
+      // Чередование: кор1, спина1, кор2, спина2... = 8 дней
+      const mainW = mainWeek.days.filter(d => !d.rest);
+      const backW = backWeek.days.filter(d => !d.rest);
+      const pairs = Math.max(mainW.length, backW.length);
+      for (let i = 0; i < pairs; i++) {
+        if (mainW[i]) days.push({ ...mainW[i], combinedType: 'main', globalIdx: days.length });
+        if (backW[i]) days.push({ ...backW[i], combinedType: 'back', globalIdx: days.length });
+      }
     }
-  }
+  });
   return days;
 }
-const COMBINED_DAYS = buildCombined(); // 51 день
+const COMBINED_DAYS = buildCombined(); // 61 день
 
 // ======= STATE =======
 // Программа пользователя — грузится из Supabase, fallback на COMBINED_DAYS
@@ -1488,9 +1504,7 @@ function finishActive() {
   // Для совмещённого дня — показываем кнопку перехода к спине
   const completeMsg = msgs[Math.floor(Math.random()*msgs.length)];
   document.getElementById('complete-msg').textContent = S.pendingBackDay
-    ? completeMsg + '
-
-Теперь блок спины и осанки →'
+    ? completeMsg + ' Теперь блок спины и осанки →'
     : completeMsg;
   document.getElementById(S.cur).classList.add('slide-left');
   const comp = document.getElementById('s-complete');
