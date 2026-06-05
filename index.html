@@ -465,38 +465,63 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 const SB_URL = 'https://yiqipulgofoschkccaxr.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpcWlwdWxnb2Zvc2Noa2NjYXhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzMjExMjksImV4cCI6MjA4OTg5NzEyOX0.Op4iBjGSOBcKh4pkVSd75_l8Fle3Cz15nBh9KF21YhI';
 const SB_H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
+const PROXY = '/api/sb'; // Vercel прокси — обходит блокировку операторов
 
 async function sbGet(path) {
-  const r = await fetch(SB_URL+'/rest/v1/'+path, {headers:SB_H});
-  return r.json();
+  try {
+    const r = await fetch(PROXY+'?path='+encodeURIComponent(path));
+    return r.json();
+  } catch(e) {
+    // Fallback — прямой запрос
+    const r = await fetch(SB_URL+'/rest/v1/'+path, {headers:SB_H});
+    return r.json();
+  }
 }
 
 async function sbFind(table, filters) {
-  // Строим query string — каждое значение кодируем
   const params = Object.entries(filters)
-    .map(([k,v]) => {
-      // encodeURIComponent кодирует + как %2B, но Supabase лучше понимает через тело
-      const encoded = encodeURIComponent(String(v));
-      return `${k}=eq.${encoded}`;
-    })
+    .map(([k,v]) => `${k}=eq.${encodeURIComponent(String(v))}`)
     .join('&');
-  const url = `${SB_URL}/rest/v1/${table}?select=*&${params}`;
+  const path = `${table}?select=*&${params}`;
   try {
-    const r = await fetch(url, {headers: SB_H});
+    const r = await fetch(PROXY+'?path='+encodeURIComponent(path));
     const text = await r.text();
     return JSON.parse(text);
   } catch(e) {
-    console.error('sbFind error:', e, 'url:', url);
-    throw e;
+    // Fallback — прямой запрос
+    const url = `${SB_URL}/rest/v1/${path}`;
+    const r = await fetch(url, {headers: SB_H});
+    const text = await r.text();
+    return JSON.parse(text);
   }
 }
+
 async function sbPost(path, body) {
-  const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'POST', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
-  return r.json();
+  try {
+    const r = await fetch(PROXY+'?path='+encodeURIComponent(path), {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(body)
+    });
+    return r.json();
+  } catch(e) {
+    const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'POST', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
+    return r.json();
+  }
 }
+
 async function sbPatch(path, body) {
-  const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'PATCH', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
-  return r.json();
+  try {
+    const r = await fetch(PROXY+'?path='+encodeURIComponent(path), {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify(body)
+    });
+    return r.json();
+  } catch(e) {
+    const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'PATCH', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
+    return r.json();
+  }
 }
 
 // ======= AUTH =======
