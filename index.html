@@ -1953,6 +1953,14 @@ navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e
 });
 
 function showUpdateBanner(sw) {
+  // Автоматически применяем обновление без баннера
+  if (sw) {
+    sw.addEventListener('statechange', () => {
+      if (sw.state === 'activated') location.reload();
+    });
+    sw.postMessage('skipWaiting');
+  }
+  return; // убираем баннер
   const b = document.createElement('div');
   b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c8f060;color:#0d0d12;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-family:var(--fb);font-size:13px;font-weight:500';
   b.innerHTML = '<span>🔄 Доступна новая версия</span><button onclick="applyUpdate()" style="background:#0d0d12;color:#c8f060;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">Обновить</button>';
