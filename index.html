@@ -526,12 +526,21 @@ async function loadProgressFromSB() {
   if (!currentUser) return;
   try {
     // Грузим программу пользователя
-    const progRes = await sbGet(`fc_programs?user_id=eq.${currentUser.id}&select=days,title,program_key&limit=1`);
-    if (progRes && progRes[0] && progRes[0].days) {
-      USER_PROGRAM = progRes[0].days;
-      USER_PROGRAM_KEY = progRes[0].program_key;
-      localStorage.setItem('fc_user_program', JSON.stringify(USER_PROGRAM));
-      localStorage.setItem('fc_user_program_key', USER_PROGRAM_KEY);
+    const progRes = await sbGet(`fc_programs?user_id=eq.${currentUser.id}&select=days,title,program_key,icon&order=created_at.asc`);
+    if (progRes && progRes.length > 0) {
+      // Активная — последняя (или единственная)
+      const activeProg = progRes[progRes.length - 1];
+      if (activeProg.days) {
+        USER_PROGRAM = activeProg.days;
+        USER_PROGRAM_KEY = activeProg.program_key;
+        localStorage.setItem('fc_user_program', JSON.stringify(USER_PROGRAM));
+        localStorage.setItem('fc_user_program_key', USER_PROGRAM_KEY);
+      }
+      // Все программы для карточек
+      USER_ALL_PROGRAMS = progRes;
+      localStorage.setItem('fc_user_all_programs', JSON.stringify(progRes.map(p=>({
+        title: p.title, program_key: p.program_key, icon: p.icon||'💪'
+      }))));
     }
     // Грузим прогресс
     const rows = await sbGet(`fc_progress?user_id=eq.${currentUser.id}&select=program_key,day_index`);
@@ -604,19 +613,18 @@ function renderProgCards() {
   const container = document.getElementById('prog-cards-dynamic');
   if (!container) return;
   const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
-  
-  // Карточка питания — всегда первая
+
+  // Карточка питания — всегда
   const nutCard = `<div class="prog-card" onclick="openNutrition()">
     <div class="prog-icon" style="background:rgba(240,160,96,.1)">🥗</div>
     <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · КБЖУ</div></div>
     <div class="prog-badge">калькулятор</div>
   </div>`;
 
-  // Карточки программ из USER_PROGRAM или PROGS
   let progCards = '';
-  
+
   if (progKey === 'combined') {
-    // Твои программы — кор и спина
+    // Твои программы — статические
     progCards += `<div class="prog-card" onclick="openProgram('main')">
       <div class="prog-icon" style="background:rgba(200,240,96,.1)">📋</div>
       <div class="prog-info"><div class="prog-title">Кор: 8 недель</div><div class="prog-sub">Нижний живот + боковые</div></div>
@@ -628,22 +636,47 @@ function renderProgCards() {
       <div class="prog-badge">8 нед</div>
     </div>`;
   } else {
-    // Клиент — показываем его программу
-    const title = currentUser?.name ? `Программа · ${currentUser.name}` : 'Моя программа';
-    const progLabels = {
-      postpartum: {icon:'🌸', title:'Восстановление после родов', sub:'8 недель · 3 раза в неделю', badge:'8 нед'},
-      back: {icon:'🧍', title:'Спина и осанка', sub:'8 недель · укрепление', badge:'8 нед'},
-      main: {icon:'📋', title:'Кор: 8 недель', sub:'Нижний живот + боковые', badge:'8 нед'},
-    };
-    const lbl = progLabels[progKey] || {icon:'💪', title:'Моя программа', sub:'Персональная', badge:'8 нед'};
-    progCards += `<div class="prog-card" style="background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.15)">
-      <div class="prog-icon" style="background:rgba(200,240,96,.1)">${lbl.icon}</div>
-      <div class="prog-info"><div class="prog-title">${lbl.title}</div><div class="prog-sub">${lbl.sub}</div></div>
-      <div class="prog-badge">${lbl.badge}</div>
-    </div>`;
+    // Клиент — карточки из Supabase (USER_ALL_PROGRAMS)
+    const allProgs = USER_ALL_PROGRAMS ||
+      JSON.parse(localStorage.getItem('fc_user_all_programs') || 'null');
+
+    if (allProgs && allProgs.length > 0) {
+      allProgs.forEach((prog, idx) => {
+        const isActive = idx === allProgs.length - 1;
+        const icon = prog.icon || '💪';
+        const style = isActive
+          ? 'background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.15);cursor:pointer'
+          : 'opacity:.6;cursor:pointer';
+        // Кликабельная карточка — открывает экран программы
+        progCards += `<div class="prog-card" style="${style}" onclick="openClientProgram(${idx})">
+          <div class="prog-icon" style="background:rgba(200,240,96,.1)">${icon}</div>
+          <div class="prog-info">
+            <div class="prog-title">${prog.title}</div>
+            <div class="prog-sub">${isActive ? 'Активная программа' : 'Завершена'}</div>
+          </div>
+          <div class="prog-badge">${isActive ? '▶' : '✓'}</div>
+        </div>`;
+      });
+    } else {
+      // Fallback пока данные грузятся
+      progCards += `<div class="prog-card" style="opacity:.6">
+        <div class="prog-icon" style="background:rgba(200,240,96,.1)">💪</div>
+        <div class="prog-info"><div class="prog-title">Моя программа</div><div class="prog-sub">Загружается...</div></div>
+      </div>`;
+    }
   }
 
   container.innerHTML = progCards + nutCard;
+}
+
+function openClientProgram(idx) {
+  // Открываем программу клиента по индексу
+  const allProgs = USER_ALL_PROGRAMS ||
+    JSON.parse(localStorage.getItem('fc_user_all_programs') || 'null');
+  if (!allProgs || !allProgs[idx]) return;
+  // Показываем информацию о программе
+  const prog = allProgs[idx];
+  alert(prog.title + '\n\nАктивная программа — нажми "Начать" на главном экране.');
 }
 
 function enterApp() {
@@ -675,6 +708,8 @@ function doLogout() {
   localStorage.removeItem('fc_user_pass');
   localStorage.removeItem('fc_user_program');
   localStorage.removeItem('fc_user_program_key');
+  localStorage.removeItem('fc_user_all_programs');
+  USER_ALL_PROGRAMS = null;
   localStorage.removeItem('fc_done_combined');
   S.completedCombined = [];
   USER_PROGRAM = null;
@@ -1165,6 +1200,7 @@ const COMBINED_DAYS = buildCombined(); // 61 день
 // Программа пользователя — грузится из Supabase, fallback на COMBINED_DAYS
 let USER_PROGRAM = JSON.parse(localStorage.getItem('fc_user_program') || 'null');
 let USER_PROGRAM_KEY = localStorage.getItem('fc_user_program_key') || 'combined';
+let USER_ALL_PROGRAMS = JSON.parse(localStorage.getItem('fc_user_all_programs') || 'null');
 
 // Активная программа — либо из Supabase, либо встроенная
 function getActiveDays() {
