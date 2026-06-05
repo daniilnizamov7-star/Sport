@@ -258,8 +258,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
   <div class="scroll-area">
     <div class="hero">
       <div class="hero-date" id="home-date"></div>
-      <div class="hero-greeting">Твой кор —<br><em>твоя броня</em></div>
-      <div class="hero-sub">Программа для нижнего живота и боковых</div>
+      <div class="hero-greeting" id="hero-greeting">Привет!<br><em>Начнём</em></div>
+      <div class="hero-sub" id="hero-sub">Загружаем твою программу...</div>
     </div>
     <div class="streak-bar">
       <div class="flame">🔥</div>
@@ -283,12 +283,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
         <div class="prog-badge">калькулятор</div>
       </div>
     </div>
-    <div class="sec-label">Почему это работает</div>
-    <div style="padding:0 20px 20px">
-      <div class="tip-card">
-        <h4>Нижний жир — последний</h4>
-        <p>Там максимальная плотность <strong>бета-рецепторов</strong> — они блокируют сжигание. Тело отдаёт эту зону последней. Нужен дефицит + правильные упражнения + <strong>8–12 недель терпения</strong>.</p>
-      </div>
+    <div id="home-tips-section" style="display:none">
+      <div class="sec-label">Почему это работает</div>
+      <div style="padding:0 20px 20px" id="home-tips"></div>
     </div>
   </div>
 </div>
@@ -670,13 +667,16 @@ function renderProgCards() {
 }
 
 function openClientProgram(idx) {
-  // Открываем программу клиента по индексу
   const allProgs = USER_ALL_PROGRAMS ||
     JSON.parse(localStorage.getItem('fc_user_all_programs') || 'null');
   if (!allProgs || !allProgs[idx]) return;
-  // Показываем информацию о программе
   const prog = allProgs[idx];
-  alert(prog.title + '\n\nАктивная программа — нажми "Начать" на главном экране.');
+  const isActive = idx === allProgs.length - 1;
+  // Для активной программы — просто прокручиваем к карточке "Сегодня"
+  if (isActive) {
+    document.getElementById('today-card')?.scrollIntoView({behavior:'smooth'});
+  }
+  // Для завершённых — ничего (можно добавить статистику позже)
 }
 
 function enterApp() {
@@ -1308,11 +1308,64 @@ window.addEventListener('popstate', () => {
 history.pushState(null,'','');
 
 // ======= HOME =======
+// Тексты hero и tips под каждый тип программы
+const PROG_CONTENT = {
+  combined: {
+    greeting: 'Твой кор —<br><em>твоя броня</em>',
+    sub: 'Программа для нижнего живота и боковых',
+    tips: [
+      {h:'Нижний жир — последний', t:'Там максимальная плотность <strong>бета-рецепторов</strong> — они блокируют сжигание. Тело отдаёт эту зону последней. Нужен дефицит + правильные упражнения + <strong>8–12 недель терпения</strong>.'},
+      {h:'Вакуум — каждое утро', t:'Делай вакуум <strong>натощак лёжа</strong> — 3–5 минут. Это единственное упражнение, которое работает с поперечной мышцей напрямую.'},
+    ]
+  },
+  postpartum: {
+    greeting: 'Твоё тело —<br><em>твоя сила</em>',
+    sub: 'Восстановление после родов · 8 недель',
+    tips: [
+      {h:'Главное правило', t:'Работай умно, а не жёстко. Прямые скручивания исключены — сначала активируем глубокие мышцы. Это фундамент.'},
+      {h:'Слушай тело', t:'Если появляются боли в коленях или животе — пропусти упражнение. <strong>Твоё тело умнее любой программы.</strong>'},
+    ]
+  },
+  back: {
+    greeting: 'Твоя спина —<br><em>твоя опора</em>',
+    sub: 'Спина и осанка · 8 недель',
+    tips: [
+      {h:'Осанка — это привычка', t:'Упражнения создают силу, но осанку формирует <strong>постоянное внимание</strong>. Следи за положением плеч в течение дня.'},
+    ]
+  },
+  default: {
+    greeting: 'Твоя программа —<br><em>твой результат</em>',
+    sub: 'Персональный план тренировок',
+    tips: [
+      {h:'Последовательность — ключ', t:'Результат появляется через <strong>4–6 недель</strong> регулярных тренировок. Не пропускай без причины.'},
+    ]
+  }
+};
+
 function initHome() {
   const D=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
   const M=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const n=new Date();
   document.getElementById('home-date').textContent = `${D[n.getDay()]}, ${n.getDate()} ${M[n.getMonth()]}`;
+
+  // Hero и tips под программу пользователя
+  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+  const pc = PROG_CONTENT[progKey] || PROG_CONTENT.default;
+  document.getElementById('hero-greeting').innerHTML = pc.greeting;
+  document.getElementById('hero-sub').textContent = pc.sub;
+
+  // Tips
+  const tipsSection = document.getElementById('home-tips-section');
+  const tipsEl = document.getElementById('home-tips');
+  if (pc.tips && pc.tips.length > 0) {
+    tipsEl.innerHTML = pc.tips.map(tip =>
+      `<div class="tip-card"><h4>${tip.h}</h4><p>${tip.t}</p></div>`
+    ).join('');
+    tipsSection.style.display = '';
+  } else {
+    tipsSection.style.display = 'none';
+  }
+
   refreshHome();
 }
 
