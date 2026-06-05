@@ -1936,6 +1936,27 @@ function applyUpdate() {
 function openNutrition() {
   push('s-nutrition');
   showNav(true);
+  // Подставляем данные из профиля пользователя
+  const profile = currentUser?.profile || JSON.parse(localStorage.getItem('fc_user_program') ? '{}' : '{}');
+  const weight = profile?.weight || currentUser?.profile?.weight;
+  const height = profile?.height || currentUser?.profile?.height;
+  const age = profile?.age || currentUser?.profile?.age;
+  if (weight) {
+    const wInput = document.getElementById('nut-w');
+    if (wInput && !wInput.value) wInput.value = weight;
+  }
+  if (height) {
+    const hInput = document.getElementById('nut-h');
+    if (hInput && !hInput.value) hInput.value = height;
+  }
+  if (age) {
+    const aInput = document.getElementById('nut-a');
+    if (aInput && !aInput.value) aInput.value = age;
+  }
+  // Пол из program_key
+  const progKey = currentUser?.program_key || '';
+  const sexEl = document.getElementById('nut-sex');
+  if (sexEl && progKey === 'postpartum') sexEl.value = 'female';
   calcNut();
 }
 
@@ -2071,7 +2092,7 @@ function checkAndRestore() {
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Вес</label>
         <input type="range" id="nut-w" min="50" max="130" value="79" oninput="calcNut()" style="flex:1;accent-color:var(--accent)">
-        <span id="nut-wv" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">79 кг</span>
+        <span id="nut-wv" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">— кг</span>
       </div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Рост</label>
@@ -2150,7 +2171,7 @@ function checkAndRestore() {
       </div>
       <div style="background:var(--bg3);border-radius:var(--r);padding:14px 16px">
         <div style="font-family:var(--font-head);font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Кубики — это жир, не мышцы</div>
-        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300">При 178 и 79 кг у тебя нормальный вес. Кубики уже есть — просто под жиром. <strong style="color:var(--text);font-weight:500">Убери жир — появятся кубики.</strong> Отдельно "качать кубики" не нужно.</p>
+        <p style="font-size:12px;color:var(--text2);line-height:1.65;font-weight:300" id="nut-abs-text">Кубики уже есть — просто под жиром. <strong style="color:var(--text);font-weight:500">Убери жир — появятся кубики.</strong> Отдельно "качать кубики" не нужно.</p>
       </div>
     </div>
   </div>
