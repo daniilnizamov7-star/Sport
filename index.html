@@ -276,31 +276,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
       <button class="today-start">Начать →</button>
     </div>
     <div class="sec-label">Программы</div>
-    <div class="prog-cards">
-      <div class="prog-card" id="card-main" onclick="openProgram('main')">
-        <div class="prog-icon" style="background:rgba(200,240,96,.1)">📋</div>
-        <div class="prog-info"><div class="prog-title">Кор: 8 недель</div><div class="prog-sub">Нижний живот + боковые · Всё включено</div></div>
-        <div class="prog-badge">8 нед</div>
-      </div>
+    <div class="prog-cards" id="prog-cards-dynamic">
       <div class="prog-card" onclick="openNutrition()">
         <div class="prog-icon" style="background:rgba(240,160,96,.1)">🥗</div>
-        <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · Дефицит · Кубики</div></div>
+        <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · КБЖУ</div></div>
         <div class="prog-badge">калькулятор</div>
-      </div>
-      <div class="prog-card" id="card-back" onclick="openProgram('back')">
-        <div class="prog-icon" style="background:rgba(96,180,255,.08)">🧍</div>
-        <div class="prog-info"><div class="prog-title">Спина и осанка</div><div class="prog-sub">Параллельно с основной · 15 мин</div></div>
-        <div class="prog-badge">4 нед</div>
-      </div>
-      <div class="prog-card" onclick="openPartner()" style="background:linear-gradient(135deg,rgba(200,240,96,.08),rgba(200,240,96,.03));border:1px solid rgba(200,240,96,.2)">
-        <div class="prog-icon" style="background:rgba(200,240,96,.12);font-size:16px;font-weight:800;color:var(--acc);font-family:var(--font-head)">TP</div>
-        <div class="prog-info"><div class="prog-title">Tatirex Pro</div><div class="prog-sub">Халяль протеин · Рекомендую</div></div>
-        <div class="pbadge" style="background:rgba(200,240,96,.15);color:var(--acc)">халяль</div>
-      </div>
-      <div class="prog-card" style="opacity:.4;pointer-events:none">
-        <div class="prog-icon" style="background:rgba(255,255,255,.05)">🔒</div>
-        <div class="prog-info"><div class="prog-title">Всё тело</div><div class="prog-sub">Скоро · Мужчины / Женщины / Дети</div></div>
-        <div class="prog-badge">soon</div>
       </div>
     </div>
     <div class="sec-label">Почему это работает</div>
@@ -620,17 +600,57 @@ async function doRegister() {
   }
 }
 
+function renderProgCards() {
+  const container = document.getElementById('prog-cards-dynamic');
+  if (!container) return;
+  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+  
+  // Карточка питания — всегда первая
+  const nutCard = `<div class="prog-card" onclick="openNutrition()">
+    <div class="prog-icon" style="background:rgba(240,160,96,.1)">🥗</div>
+    <div class="prog-info"><div class="prog-title">Питание</div><div class="prog-sub">Калории · Белок · КБЖУ</div></div>
+    <div class="prog-badge">калькулятор</div>
+  </div>`;
+
+  // Карточки программ из USER_PROGRAM или PROGS
+  let progCards = '';
+  
+  if (progKey === 'combined') {
+    // Твои программы — кор и спина
+    progCards += `<div class="prog-card" onclick="openProgram('main')">
+      <div class="prog-icon" style="background:rgba(200,240,96,.1)">📋</div>
+      <div class="prog-info"><div class="prog-title">Кор: 8 недель</div><div class="prog-sub">Нижний живот + боковые</div></div>
+      <div class="prog-badge">8 нед</div>
+    </div>`;
+    progCards += `<div class="prog-card" onclick="openProgram('back')">
+      <div class="prog-icon" style="background:rgba(96,180,255,.08)">🧍</div>
+      <div class="prog-info"><div class="prog-title">Спина и осанка</div><div class="prog-sub">Параллельно с основной</div></div>
+      <div class="prog-badge">8 нед</div>
+    </div>`;
+  } else {
+    // Клиент — показываем его программу
+    const title = currentUser?.name ? `Программа · ${currentUser.name}` : 'Моя программа';
+    const progLabels = {
+      postpartum: {icon:'🌸', title:'Восстановление после родов', sub:'8 недель · 3 раза в неделю', badge:'8 нед'},
+      back: {icon:'🧍', title:'Спина и осанка', sub:'8 недель · укрепление', badge:'8 нед'},
+      main: {icon:'📋', title:'Кор: 8 недель', sub:'Нижний живот + боковые', badge:'8 нед'},
+    };
+    const lbl = progLabels[progKey] || {icon:'💪', title:'Моя программа', sub:'Персональная', badge:'8 нед'};
+    progCards += `<div class="prog-card" style="background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.15)">
+      <div class="prog-icon" style="background:rgba(200,240,96,.1)">${lbl.icon}</div>
+      <div class="prog-info"><div class="prog-title">${lbl.title}</div><div class="prog-sub">${lbl.sub}</div></div>
+      <div class="prog-badge">${lbl.badge}</div>
+    </div>`;
+  }
+
+  container.innerHTML = progCards + nutCard;
+}
+
 function enterApp() {
   document.getElementById('s-login').classList.add('hidden');
   document.getElementById('s-home').classList.remove('hidden');
   S.cur = 's-home';
-  // Скрываем карточки кор/спина для клиентов (не combined)
-  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_prog') || 'combined';
-  const isOwner = progKey === 'combined';
-  const cardMain = document.getElementById('card-main');
-  const cardBack = document.getElementById('card-back');
-  if (cardMain) cardMain.style.display = isOwner ? '' : 'none';
-  if (cardBack) cardBack.style.display = isOwner ? '' : 'none';
+  renderProgCards();
   checkAndRestore();
   initHome();
 }
@@ -1660,20 +1680,47 @@ function calcNut() {
   const h = +document.getElementById('nut-h').value;
   const a = +document.getElementById('nut-a').value;
   const act = +document.getElementById('nut-act').value;
+  const sex = document.getElementById('nut-sex')?.value || 'male';
+  const goal = document.getElementById('nut-goal')?.value || 'loss';
+
   document.getElementById('nut-wv').textContent = w + ' кг';
   document.getElementById('nut-hv').textContent = h + ' см';
-  document.getElementById('nut-av').textContent = a + ' ' + (a===21||a===31||a===41?'год':a%10===1&&a%100!==11?'год':[2,3,4].includes(a%10)&&![12,13,14].includes(a%100)?'года':'лет');
-  // Mifflin-St Jeor для мужчин
-  const bmr = 10*w + 6.25*h - 5*a + 5;
+  document.getElementById('nut-av').textContent = a + ' ' + (a%10===1&&a%100!==11?'год':[2,3,4].includes(a%10)&&![12,13,14].includes(a%100)?'года':'лет');
+
+  // Mifflin-St Jeor с учётом пола
+  const bmr = sex === 'male'
+    ? 10*w + 6.25*h - 5*a + 5
+    : 10*w + 6.25*h - 5*a - 161;
   const tdee = Math.round(bmr * act);
-  const target = tdee - 350;
+
+  // Цель
+  let target, goalLabel, protMult;
+  if (goal === 'loss') {
+    target = tdee - 400;
+    goalLabel = 'ккал/день — похудение (дефицит −400 ккал)';
+    protMult = 2.2; // больше белка при дефиците
+  } else if (goal === 'maintain') {
+    target = tdee;
+    goalLabel = 'ккал/день — поддержание веса';
+    protMult = 1.8;
+  } else {
+    target = tdee + 300;
+    goalLabel = 'ккал/день — набор массы (+300 ккал)';
+    protMult = 2.0;
+  }
+
+  const prot = Math.round(w * protMult);
+  const fat = Math.round(w * (goal === 'gain' ? 1.2 : 1.0));
+  const protKcal = prot * 4;
+  const fatKcal = fat * 9;
+  const carb = Math.max(0, Math.round((target - protKcal - fatKcal) / 4));
+
   document.getElementById('nut-kcal').textContent = target;
-  document.getElementById('nut-maintenance').textContent = 'Поддержание веса: ' + tdee + ' ккал/день';
-  document.getElementById('nut-prot').textContent = Math.round(w * 2);
-  document.getElementById('nut-fat').textContent = Math.round(w * 1);
-  const protKcal = Math.round(w*2)*4;
-  const fatKcal = Math.round(w*1)*9;
-  document.getElementById('nut-carb').textContent = Math.max(0, Math.round((target - protKcal - fatKcal) / 4));
+  document.getElementById('nut-goal-label').textContent = goalLabel;
+  document.getElementById('nut-maintenance').textContent = 'Норма TDEE: ' + tdee + ' ккал/день';
+  document.getElementById('nut-prot').textContent = prot;
+  document.getElementById('nut-fat').textContent = fat;
+  document.getElementById('nut-carb').textContent = carb;
 }
 
 // ======= РУЧНАЯ ОТМЕТКА =======
@@ -1749,8 +1796,8 @@ function checkAndRestore() {
   </div>
   <div class="scroll-area">
     <div style="padding:6px 20px 16px">
-      <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Твой калькулятор</div>
-      <p style="font-size:13px;color:var(--text2);font-weight:300;line-height:1.5">Введи параметры — получи точный дефицит для сжигания нижнего жира без потери мышц.</p>
+      <div style="font-size:11px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Твой калькулятор КБЖУ</div>
+      <p style="font-size:13px;color:var(--text2);font-weight:300;line-height:1.5">Введи параметры и выбери цель — получи точные цифры по калориям и БЖУ.</p>
     </div>
 
     <!-- Калькулятор -->
@@ -1772,7 +1819,14 @@ function checkAndRestore() {
         <input type="range" id="nut-a" min="18" max="60" value="31" oninput="calcNut()" style="flex:1;accent-color:var(--accent)">
         <span id="nut-av" style="font-size:13px;font-weight:500;min-width:50px;text-align:right">31 год</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Пол</label>
+        <select id="nut-sex" onchange="calcNut()" style="flex:1;background:var(--bg4);border:none;border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;cursor:pointer">
+          <option value="male">Мужчина</option>
+          <option value="female">Женщина</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
         <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Активность</label>
         <select id="nut-act" onchange="calcNut()" style="flex:1;background:var(--bg4);border:none;border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;cursor:pointer">
           <option value="1.2">Сидячая работа</option>
@@ -1781,12 +1835,20 @@ function checkAndRestore() {
           <option value="1.725">Высокая (6–7 трен/нед)</option>
         </select>
       </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <label style="font-size:12px;color:var(--text2);width:70px;flex-shrink:0">Цель</label>
+        <select id="nut-goal" onchange="calcNut()" style="flex:1;background:var(--bg4);border:none;border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;cursor:pointer">
+          <option value="loss">Похудение (−400 ккал)</option>
+          <option value="maintain">Поддержание веса</option>
+          <option value="gain">Набор массы (+300 ккал)</option>
+        </select>
+      </div>
     </div>
 
     <!-- Результат -->
     <div id="nut-result" style="margin:0 20px 16px;background:rgba(200,240,96,.07);border:1px solid rgba(200,240,96,.18);border-radius:var(--r);padding:16px">
       <div id="nut-kcal" style="font-family:var(--font-head);font-size:38px;font-weight:800;color:var(--accent);margin-bottom:2px">—</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">ккал/день для похудения (дефицит −350 ккал)</div>
+      <div id="nut-goal-label" style="font-size:12px;color:var(--text2);margin-bottom:14px">ккал/день</div>
       <div id="nut-maintenance" style="font-size:11px;color:var(--text3);margin-bottom:14px"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <div style="background:var(--bg3);border-radius:10px;padding:10px;text-align:center">
