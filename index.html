@@ -670,7 +670,7 @@ function openClientProgram(idx) {
   renderClientProgScreen();
 }
 
-function renderClientProgScreen() {
+function renderClientProgScreen(activeWeek) {
   const days = getActiveDays();
   const total = S.completedCombined.length;
   const allProgs = USER_ALL_PROGRAMS || JSON.parse(localStorage.getItem('fc_user_all_programs')||'null');
@@ -678,39 +678,51 @@ function renderClientProgScreen() {
   const title = prog?.title || 'Моя программа';
   const totalDays = days.length;
   const weeks = Math.ceil(totalDays / 7);
-  let weeksHTML = '';
-  for (let w = 0; w < weeks; w++) {
-    const weekDays = days.slice(w*7, w*7+7);
-    const daysHTML = weekDays.map((d, di) => {
-      const absIdx = w*7+di;
-      const isDone = absIdx < total;
-      const isNow = absIdx === total;
-      const nc = isDone?'done':isNow?'today':'';
-      const markBtn = !isDone
-        ? `<div style="padding:0 14px 12px"><button onclick="event.stopPropagation();markClientDayDone(${absIdx})"
-            style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
-            border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
-            ${d.rest?'→ Пропустить':'✓ Уже выполнил'}</button></div>` : '';
-      return `<div class="day-card ${d.rest||isDone?'':'clickable'}" ${d.rest||isDone?'':('onclick="openClientDay('+absIdx+')"')}>
-        <div class="day-header">
-          <div class="day-num ${nc}">${isDone?'✓':absIdx+1}</div>
-          <div class="day-info"><div class="day-title">${d.t||'День '+(absIdx+1)}</div>
-          <div class="day-sub">${d.rest?'День отдыха':`${d.ex?.length||0} упр · ${d.min||15} мин`}</div></div>
-          ${isDone?'<div style="color:var(--acc)">✓</div>':'<div class="day-arrow">›</div>'}
-        </div>${markBtn}</div>`;
-    }).join('');
-    weeksHTML += `<div style="margin-bottom:8px;font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:0 20px">Неделя ${w+1}</div>${daysHTML}`;
-  }
+
+  // Определяем активную неделю
+  const currentWeek = activeWeek !== undefined ? activeWeek : Math.floor(total / 7);
+  const safeWeek = Math.min(currentWeek, weeks - 1);
+
+  // Вкладки недель
+  const weekTabsHTML = Array.from({length: weeks}, (_,w) =>
+    `<button class="week-tab ${w===safeWeek?'active':''}" onclick="renderClientProgScreen(${w})">${'Неделя '+(w+1)}</button>`
+  ).join('');
+
+  // Дни выбранной недели
+  const weekDays = days.slice(safeWeek*7, safeWeek*7+7);
+  const daysHTML = weekDays.map((d, di) => {
+    const absIdx = safeWeek*7+di;
+    const isDone = absIdx < total;
+    const isNow = absIdx === total;
+    const nc = isDone?'done':isNow?'today':'';
+    const markBtn = !isDone
+      ? `<div style="padding:0 14px 12px"><button onclick="event.stopPropagation();markClientDayDone(${absIdx})"
+          style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
+          border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
+          ${d.rest?'→ Пропустить':'✓ Уже выполнил'}</button></div>` : '';
+    return `<div class="day-card ${d.rest||isDone?'':'clickable'}" ${d.rest||isDone?'':('onclick="openClientDay('+absIdx+')"')}>
+      <div class="day-header">
+        <div class="day-num ${nc}">${isDone?'✓':absIdx+1}</div>
+        <div class="day-info"><div class="day-title">${d.t||'День '+(absIdx+1)}</div>
+        <div class="day-sub">${d.rest?'День отдыха':`${d.ex?.length||0} упр · ${d.min||15} мин`}</div></div>
+        ${isDone?'<div style="color:var(--acc)">✓</div>':'<div class="day-arrow">›</div>'}
+      </div>${markBtn}</div>`;
+  }).join('');
+
   document.getElementById('prog-h1').textContent = title;
   document.getElementById('prog-tag').textContent = `${total} из ${totalDays} дней выполнено`;
   document.getElementById('prog-title').textContent = title;
   document.getElementById('prog-desc').textContent = '';
   document.getElementById('why-items').innerHTML = '';
-  document.getElementById('week-tabs').innerHTML = '';
-  document.getElementById('day-list').innerHTML = weeksHTML;
-  push('s-prog');
-  showNav(true);
-  document.getElementById('prog-back-btn').style.visibility = 'visible';
+  document.getElementById('week-tabs').innerHTML = weekTabsHTML;
+  document.getElementById('day-list').innerHTML = daysHTML;
+
+  // Если только открываем — пушим экран
+  if (S.cur !== 's-prog') {
+    push('s-prog');
+    showNav(true);
+    document.getElementById('prog-back-btn').style.visibility = 'visible';
+  }
 }
 
 function openClientDay(absIdx) {
@@ -728,7 +740,8 @@ function markClientDayDone(absIdx) {
   S.completedCombined.sort((a,b)=>a-b);
   localStorage.setItem('fc_done_combined', JSON.stringify(S.completedCombined));
   saveProgressToSB('combined', absIdx);
-  renderClientProgScreen();
+  const week = Math.floor(absIdx / 7);
+  renderClientProgScreen(week);
   refreshHome();
 }
 
