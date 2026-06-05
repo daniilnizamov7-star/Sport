@@ -423,6 +423,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <div class="completion-emoji">💪</div>
     <h2>Готово!</h2>
     <p id="complete-msg">Тренировка завершена. Возвращайся завтра.</p>
+    <button id="complete-back-btn" class="completion-btn" style="display:none;margin-bottom:10px;background:var(--bg3);color:var(--text)" onclick="startBackBlock()">🧍 Начать блок спины →</button>
     <button class="completion-btn" onclick="finishWorkout()">На главную</button>
   </div>
 </div>
@@ -480,12 +481,23 @@ async function sbGet(path) {
 }
 
 async function sbFind(table, filters) {
-  // Фильтры через query string с правильным кодированием
+  // Строим query string — каждое значение кодируем
   const params = Object.entries(filters)
-    .map(([k,v]) => `${k}=eq.${encodeURIComponent(v)}`)
+    .map(([k,v]) => {
+      // encodeURIComponent кодирует + как %2B, но Supabase лучше понимает через тело
+      const encoded = encodeURIComponent(String(v));
+      return `${k}=eq.${encoded}`;
+    })
     .join('&');
-  const r = await fetch(SB_URL+'/rest/v1/'+table+'?select=*&'+params, {headers: SB_H});
-  return r.json();
+  const url = `${SB_URL}/rest/v1/${table}?select=*&${params}`;
+  try {
+    const r = await fetch(url, {headers: SB_H});
+    const text = await r.text();
+    return JSON.parse(text);
+  } catch(e) {
+    console.error('sbFind error:', e, 'url:', url);
+    throw e;
+  }
 }
 async function sbPost(path, body) {
   const r = await fetch(SB_URL+'/rest/v1/'+path, {method:'POST', headers:{...SB_H,'Prefer':'return=representation'}, body:JSON.stringify(body)});
@@ -614,6 +626,19 @@ function enterApp() {
   S.cur = 's-home';
   checkAndRestore();
   initHome();
+}
+
+function startBackBlock() {
+  // Запускаем блок спины после кора в совмещённый день
+  if (!S.pendingBackDay) return;
+  const backDay = S.pendingBackDay;
+  S.pendingBackDay = null;
+  S.prog = 'back';
+  S.workoutDone = false;
+  // Скрываем экран завершения
+  document.getElementById('s-complete').classList.add('hidden');
+  S.stack = S.stack.filter(s => s !== 's-complete');
+  openDay(backDay, 'Блок спины и осанки →');
 }
 
 function doLogout() {
@@ -1061,6 +1086,7 @@ let S = {
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
   completedBack: JSON.parse(localStorage.getItem('fc_done_back') || '[]'),
   completedCombined: JSON.parse(localStorage.getItem('fc_done_combined') || '[]'),
+  pendingBackDay: null,
 };
 
 // ======= STREAK (правильный расчёт) =======
@@ -1165,11 +1191,13 @@ function refreshHome() {
   const day = getActiveDays()[dayIdx];
   if (!day) return;
   const isRest = day.combinedType === 'rest' || day.rest;
-  const typeLabel = day.combinedType === 'main' ? '💪 Кор' : day.combinedType === 'back' ? '🧍 Спина и осанка' : '😴 Отдых';
+  const typeLabel = day.combinedType === 'main' ? '💪 Кор' : day.combinedType === 'back' ? '🧍 Спина и осанка' : day.combinedType === 'both' ? '💪🧍 Кор + Спина' : '😴 Отдых';
   document.getElementById('today-tag').textContent = `День ${total+1} из ${getActiveDays().length} · ${typeLabel}`;
   document.getElementById('today-title').textContent = day.t;
   document.getElementById('today-meta').textContent = isRest
     ? (day.note || 'День отдыха — восстановление')
+    : day.combinedType === 'both'
+    ? `${(day.mainDay?.ex?.length||0) + (day.backDay?.ex?.length||0)} упражнений · ${day.min||30} мин (2 блока)`
     : `${day.ex?.length||0} упражнений · ${day.min||15} мин`;
 }
 
@@ -1178,8 +1206,7 @@ function openToday() {
   const dayIdx = total % getActiveDays().length;
   const day = getActiveDays()[dayIdx];
   if (!day) return;
-  // С новой логикой buildCombined отдыхов быть не должно
-  // но на случай если остались — пропускаем автоматически
+  // Отдых — автоматически пропускаем
   if (day.combinedType === 'rest' || day.rest) {
     const newIdx = S.completedCombined.length;
     S.completedCombined.push(newIdx);
@@ -1188,10 +1215,18 @@ function openToday() {
     refreshHome();
     return;
   }
-  S.prog = day.combinedType === 'back' ? 'back' : 'main';
   S.currentCombinedIdx = dayIdx;
-  const typeLabel = day.combinedType === 'main' ? 'Кор' : 'Спина и осанка';
-  openDay(day, `День ${total+1} · ${typeLabel}`);
+  if (day.combinedType === 'both') {
+    // Совмещённый день — сначала кор, потом спина
+    S.prog = 'main';
+    S.pendingBackDay = day.backDay; // запомним спину для после кора
+    openDay(day.mainDay, `День ${total+1} · 💪 Кор (часть 1/2)`);
+  } else {
+    S.prog = day.combinedType === 'back' ? 'back' : 'main';
+    S.pendingBackDay = null;
+    const typeLabel = day.combinedType === 'main' ? 'Кор' : 'Спина и осанка';
+    openDay(day, `День ${total+1} · ${typeLabel}`);
+  }
 }
 
 function plurDays(n) {
@@ -1450,13 +1485,22 @@ function finishActive() {
     "Лопатки, грудные, поясница — всё в работе.\nПродолжай."
   ];
   const msgs = S.prog === 'back' ? msgsBack : msgsMain;
-  document.getElementById('complete-msg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  // Для совмещённого дня — показываем кнопку перехода к спине
+  const completeMsg = msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById('complete-msg').textContent = S.pendingBackDay
+    ? completeMsg + '
+
+Теперь блок спины и осанки →'
+    : completeMsg;
   document.getElementById(S.cur).classList.add('slide-left');
   const comp = document.getElementById('s-complete');
   comp.classList.remove('hidden','slide-left');
   S.stack.push(S.cur);
   S.cur='s-complete';
   showNav(false);
+  // Если есть блок спины — добавляем кнопку
+  const extraBtn = document.getElementById('complete-back-btn');
+  if (extraBtn) extraBtn.style.display = S.pendingBackDay ? 'block' : 'none';
 }
 
 function finishWorkout() {
