@@ -671,12 +671,16 @@ function openClientProgram(idx) {
     JSON.parse(localStorage.getItem('fc_user_all_programs') || 'null');
   if (!allProgs || !allProgs[idx]) return;
   const prog = allProgs[idx];
-  const isActive = idx === allProgs.length - 1;
-  // Для активной программы — просто прокручиваем к карточке "Сегодня"
-  if (isActive) {
-    document.getElementById('today-card')?.scrollIntoView({behavior:'smooth'});
+  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+  // Открываем экран программы
+  if (PROGS[progKey]) {
+    S.prog = progKey;
+    S.week = 0;
+    push('s-prog');
+    renderProg();
+    showNav(true);
+    document.getElementById('prog-back-btn').style.visibility = 'visible';
   }
-  // Для завершённых — ничего (можно добавить статистику позже)
 }
 
 function enterApp() {
@@ -1290,7 +1294,14 @@ function switchTab(tab) {
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='program') {
-    S.prog='main'; S.week=0; renderProg();
+    // Для клиента — показываем его программу, для тебя — main
+    const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+    if (progKey !== 'combined' && PROGS[progKey]) {
+      S.prog = progKey;
+    } else {
+      S.prog = 'main';
+    }
+    S.week = 0; renderProg();
     document.getElementById('prog-back-btn').style.visibility = 'hidden';
   }
   if (tab==='partner') {
@@ -1458,10 +1469,18 @@ function renderDays() {
   const prog = PROGS[S.prog] || PROGS.main;
   const week = prog.weeks[S.week];
   if (!week) return;
-  const total = S.prog === 'back'
-    ? S.completedBack.filter(d=>d).length
-    : S.completed.filter(d=>d).length;
-  const absDay = S.prog==='main' ? (total % 56) : (total % 28);
+  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+  let total;
+  if (S.prog === 'back') {
+    total = S.completedBack.filter(d=>d).length;
+  } else if (progKey !== 'combined') {
+    // Клиентская программа — берём из completedCombined
+    total = S.completedCombined.length;
+  } else {
+    total = S.completed.filter(d=>d).length;
+  }
+  const progWeeks = (PROGS[S.prog] || PROGS.main).weeks.length * 7;
+  const absDay = total % progWeeks;
   document.getElementById('day-list').innerHTML = week.days.map((d,i)=>{
     const absIdx = S.week*7+i;
     const isDone = absIdx < total;
@@ -1704,13 +1723,14 @@ function finishWorkout() {
 
 // ======= PROGRESS =======
 function renderProgress() {
-  const total = S.completed.filter(d=>d).length;
+  const progKey = currentUser?.program_key || localStorage.getItem('fc_user_program_key') || 'combined';
+  const isClient = progKey !== 'combined';
+  const total = isClient ? S.completedCombined.length : S.completed.filter(d=>d).length;
   const streak = calcStreak();
   document.getElementById('pp-total').textContent = total;
   document.getElementById('pp-streak').textContent = streak;
-  // Тренировки за эту календарную неделю
   const weekStart = new Date(); weekStart.setDate(weekStart.getDate()-weekStart.getDay()+1); weekStart.setHours(0,0,0,0);
-  const thisWeek = S.completed.filter(d=>new Date(d)>=weekStart).length;
+  const thisWeek = isClient ? 0 : S.completed.filter(d=>new Date(d)>=weekStart).length;
   document.getElementById('pp-week').textContent = `${Math.min(thisWeek,7)}/7`;
   document.getElementById('pp-mins').textContent = total*17;
   const days=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
