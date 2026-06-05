@@ -1944,6 +1944,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Слушаем сообщение от SW об обновлении
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
+  if (e.data?.type === 'UPDATE_AVAILABLE') {
+    // Тихо обновляем кеш — при следующем открытии будет новая версия
+    // Не показываем баннер каждый раз — только перезагружаем
+  }
+});
+
 function showUpdateBanner(sw) {
   const b = document.createElement('div');
   b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c8f060;color:#0d0d12;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:9999;font-family:var(--fb);font-size:13px;font-weight:500';
