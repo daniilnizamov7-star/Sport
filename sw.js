@@ -1,4 +1,4 @@
-const CACHE = 'fitcore-v10';
+const CACHE = 'fitcore-v12';
 const ASSETS = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', e => {
@@ -14,45 +14,30 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({type:'window'}).then(clients => {
+        clients.forEach(c => c.navigate(c.url));
+      }))
   );
 });
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Supabase — только сеть
-  if (url.hostname.includes('supabase.co')) {
-    e.respondWith(
-      fetch(e.request).catch(() => new Response(JSON.stringify([]), {
-        headers: { 'Content-Type': 'application/json' }
-      }))
-    );
-    return;
-  }
+  // Supabase — только сеть, без перехвата
+  if (url.hostname.includes('supabase.co')) return;
 
   if (e.request.method !== 'GET') return;
 
-  // index.html — кеш сразу + обновление в фоне
+  // index.html — сеть первая, fallback кеш
   if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('/')) {
     e.respondWith(
-      caches.open(CACHE).then(cache => {
-        return cache.match(e.request).then(cached => {
-          // Обновляем в фоне
-          const fetchPromise = fetch(e.request).then(res => {
-            if (res.ok) {
-              cache.put(e.request, res.clone());
-              // Сообщаем всем вкладкам что есть обновление
-              self.clients.matchAll().then(clients => {
-                clients.forEach(client => client.postMessage({ type: 'UPDATE_AVAILABLE' }));
-              });
-            }
-            return res;
-          }).catch(() => cached);
-
-          // Отдаём кеш мгновенно если есть, иначе ждём сеть
-          return cached || fetchPromise;
-        });
-      })
+      fetch(e.request.clone())
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(e.request))
     );
     return;
   }
@@ -60,11 +45,12 @@ self.addEventListener('fetch', e => {
   // Остальное — кеш первый
   e.respondWith(
     caches.match(e.request).then(cached => {
-      const fetchPromise = fetch(e.request).then(res => {
-        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+      if (cached) return cached;
+      return fetch(e.request.clone()).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
         return res;
       });
-      return cached || fetchPromise;
     })
   );
 });
