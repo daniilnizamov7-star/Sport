@@ -1334,40 +1334,64 @@ const PROGS = {
 // ======= COMBINED PROGRAM (чередование кор/спина без выходных) =======
 // Строим динамически из main и back
 function buildCombined() {
-  // Недели 3,5,7 (индексы 2,4,6) — наложение день в день
-  // Остальные недели — чередование 4+4 = 8 дней
-  const overlayWeeks = [2, 4, 6];
+  // Обычные недели (1,2,4,6,8): чередование кор-спина-кор-спина = 8 дней
+  // Особые недели (3,5,7): 5 тренировок кор + 4 спина = 8 дней по схеме:
+  //   День 1: кор1
+  //   День 2: кор2 + спина1 (совмещён)
+  //   День 3: отдых
+  //   День 4: кор4 + спина3 (совмещён)
+  //   День 5: кор5
+  //   День 6: спина5
+  //   День 7: кор7
+  //   День 8: спина7
+  const specialWeeks = [2, 4, 6]; // индексы недель 3,5,7
   const days = [];
+
+  function makeMerged(md, bd) {
+    return {
+      t: md.t + ' + ' + bd.t,
+      ex: [...(md.ex||[]), ...(bd.ex||[])],
+      min: (md.min||15) + (bd.min||15),
+      combinedType: 'both',
+      mainDay: { t: md.t, ex: md.ex||[], min: md.min||15 },
+      backDay: { t: bd.t, ex: bd.ex||[], min: bd.min||15 },
+      globalIdx: 0
+    };
+  }
 
   PROGS.main.weeks.forEach((mainWeek, wi) => {
     const backWeek = PROGS.back.weeks[wi];
     if (!backWeek) return;
 
-    if (overlayWeeks.includes(wi)) {
-      // Наложение: накладываем день в день
-      for (let di = 0; di < 7; di++) {
-        const md = mainWeek.days[di];
-        const bd = backWeek.days[di];
-        if (md.rest && bd.rest) {
-          days.push({ t: 'Отдых', rest: true, combinedType: 'rest', globalIdx: days.length });
-        } else if (!md.rest && bd.rest) {
-          days.push({ ...md, combinedType: 'main', globalIdx: days.length });
-        } else if (md.rest && !bd.rest) {
-          days.push({ ...bd, combinedType: 'back', globalIdx: days.length });
-        } else {
-          days.push({
-            t: md.t + ' + ' + bd.t,
-            ex: [...(md.ex||[]), ...(bd.ex||[])],
-            min: (md.min||15) + (bd.min||15),
-            combinedType: 'both',
-            mainDay: { t: md.t, ex: md.ex||[], min: md.min||15 },
-            backDay: { t: bd.t, ex: bd.ex||[], min: bd.min||15 },
-            globalIdx: days.length
-          });
-        }
-      }
+    if (specialWeeks.includes(wi)) {
+      // Особая неделя (3,5,7): 5 тренировок кор + 4 спина = 8 дней
+      // Берём дни по реальной позиции в неделе (не фильтруем, а берём по индексу)
+      const allM = mainWeek.days; // 7 дней (д1-д7)
+      const allB = backWeek.days; // 7 дней (д1-д7)
+      // mW по порядку: д1,д2,д4,д5,д7 (индексы 0,1,3,4,6)
+      // bW по порядку: д1,д3,д5,д7 (индексы 0,2,4,6)
+      const mW = allM.filter(d => !d.rest); // 5 тренировок
+      const bW = allB.filter(d => !d.rest); // 4 тренировки
+
+      // День 1: кор д1
+      days.push({ ...mW[0], combinedType: 'main', globalIdx: days.length });
+      // День 2: кор д2 + спина д1
+      days.push({ ...makeMerged(mW[1], bW[0]), globalIdx: days.length });
+      // День 3: отдых
+      days.push({ t: 'Отдых', rest: true, combinedType: 'rest', globalIdx: days.length });
+      // День 4: кор д4 + спина д3
+      days.push({ ...makeMerged(mW[2], bW[1]), globalIdx: days.length });
+      // День 5: кор д5
+      days.push({ ...mW[3], combinedType: 'main', globalIdx: days.length });
+      // День 6: спина д5
+      days.push({ ...bW[2], combinedType: 'back', globalIdx: days.length });
+      // День 7: кор д7
+      days.push({ ...mW[4], combinedType: 'main', globalIdx: days.length });
+      // День 8: спина д7
+      days.push({ ...bW[3], combinedType: 'back', globalIdx: days.length });
+
     } else {
-      // Чередование: кор1, спина1, кор2, спина2... = 8 дней
+      // Обычная неделя: чередование кор-спина = 8 дней
       const mainW = mainWeek.days.filter(d => !d.rest);
       const backW = backWeek.days.filter(d => !d.rest);
       const pairs = Math.max(mainW.length, backW.length);
