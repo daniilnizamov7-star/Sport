@@ -97,7 +97,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .prog-card:active{background:var(--bg4)}
 .prog-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .prog-info{flex:1}
-.prog-title{font-size:14px;font-weight:500;margin-bottom:1px}
+.prog-title{font-size:14px;font-weight:500;margin-bottom:1px;color:var(--text)}
 .prog-sub{font-size:11px;color:var(--text3)}
 .prog-badge{font-size:10px;padding:3px 8px;border-radius:20px;background:var(--bg4);color:var(--text2);font-weight:500;white-space:nowrap}
 
@@ -125,11 +125,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 .day-card.clickable{cursor:pointer;transition:background .15s}
 .day-card.clickable:active{background:var(--bg4)}
 .day-header{padding:12px 14px;display:flex;align-items:center;gap:10px}
-.day-num{width:34px;height:34px;border-radius:9px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;flex-shrink:0}
+.day-num{width:34px;height:34px;border-radius:9px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;flex-shrink:0;color:var(--text)}
 .day-num.done{background:var(--accent);color:#0d0d12}
 .day-num.today{background:rgba(200,240,96,.12);color:var(--accent);border:1px solid rgba(200,240,96,.35)}
 .day-info{flex:1}
-.day-title{font-size:13px;font-weight:500}
+.day-title{font-size:13px;font-weight:500;color:var(--text)}
 .day-sub{font-size:11px;color:var(--text3);margin-top:1px}
 .day-arrow{color:var(--text3);font-size:16px}
 
@@ -552,6 +552,8 @@ async function loadProgressFromSB() {
       localStorage.setItem('fc_user_all_programs', JSON.stringify(progRes.map(p=>({
         title: p.title, program_key: p.program_key, icon: p.icon||'💪'
       }))));
+      // Перерисовываем карточки программ с реальными данными
+      if (document.getElementById('prog-cards-dynamic')) renderProgCards();
     }
     // Грузим прогресс
     const rows = await sbGet(`fc_progress?user_id=eq.${currentUser.id}&select=program_key,day_index`);
