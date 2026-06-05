@@ -522,6 +522,11 @@ async function doLogin() {
     localStorage.setItem('fc_user_id', currentUser.id);
     localStorage.setItem('fc_user_phone', phone);
     localStorage.setItem('fc_user_pass', pass);
+    localStorage.setItem('fc_user_name', currentUser.name || '');
+    // Сохраняем program_key сразу при входе
+    if (currentUser.program_key) {
+      localStorage.setItem('fc_user_program_key', JSON.stringify(currentUser.program_key));
+    }
     // Загружаем прогресс из Supabase
     await loadProgressFromSB();
     enterApp();
@@ -713,8 +718,8 @@ function renderClientProgScreen(activeWeek) {
     const nc = isDone?'done':isNow?'today':'';
     const markBtn = !isDone
       ? `<div style="padding:0 14px 12px"><button onclick="event.stopPropagation();markClientDayDone(${absIdx})"
-          style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
-          border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
+          style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--accent);
+          border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
           ${d.rest?'→ Пропустить':'✓ Уже выполнил'}</button></div>` : '';
     return `<div class="day-card ${isDone?'':'clickable'}" ${isDone?'':d.rest?'':'onclick="openClientDay('+absIdx+')\"'}>
 
@@ -813,17 +818,31 @@ function applyTheme() {
 function doLogout() {
   const badge = document.getElementById('user-name-badge');
   if (badge) badge.textContent = '';
+  // Сбрасываем currentUser
   currentUser = null;
+  USER_PROGRAM = null;
+  USER_PROGRAM_KEY = 'combined';
+  USER_ALL_PROGRAMS = null;
+  // Полная очистка localStorage
   localStorage.removeItem('fc_user_id');
   localStorage.removeItem('fc_user_phone');
   localStorage.removeItem('fc_user_pass');
+  localStorage.removeItem('fc_user_name');
   localStorage.removeItem('fc_user_program');
   localStorage.removeItem('fc_user_program_key');
   localStorage.removeItem('fc_user_all_programs');
-  USER_ALL_PROGRAMS = null;
   localStorage.removeItem('fc_done_combined');
+  localStorage.removeItem('fc_done');
+  localStorage.removeItem('fc_done_back');
+  // Полный сброс состояния S
   S.completedCombined = [];
-  USER_PROGRAM = null;
+  S.completed = [];
+  S.completedBack = [];
+  S.prog = 'combined';
+  S.stack = [];
+  S.cur = 's-login';
+  S.workoutDone = false;
+  S.pendingBackDay = null;
   // Показываем экран входа
   ['s-home','s-prog','s-progress','s-workout','s-exercise','s-active','s-complete','s-nutrition','s-partner'].forEach(id => {
     const el = document.getElementById(id);
@@ -843,9 +862,25 @@ async function tryAutoLogin() {
   if (!savedId || !savedPhone || !savedPass) return false;
   try {
     const res = await sbFind('fc_users', {'phone': savedPhone, 'password': savedPass});
-    if (res && res[0]) { currentUser = res[0]; await loadProgressFromSB(); }
-  } catch(e) {}
-  return true;
+    if (res && res[0]) {
+      currentUser = res[0];
+      if (currentUser.program_key) {
+        localStorage.setItem('fc_user_program_key', JSON.stringify(currentUser.program_key));
+      }
+      await loadProgressFromSB();
+      return true; // успешный автологин
+    } else {
+      // Пользователь не найден — чистим localStorage
+      localStorage.removeItem('fc_user_id');
+      localStorage.removeItem('fc_user_phone');
+      localStorage.removeItem('fc_user_pass');
+      return false;
+    }
+  } catch(e) {
+    // Оффлайн — входим с кешем если есть
+    if (localStorage.getItem('fc_user_id')) return true;
+    return false;
+  }
 }
 
 // ======= DATA =======
@@ -1607,8 +1642,8 @@ function renderDays() {
     const markBtn = !isDone
       ? `<div style="padding:0 14px 12px"><button
           onclick="event.stopPropagation();markDayDone('${S.prog}',${absIdx})"
-          style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
-          border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
+          style="width:100%;padding:8px;background:var(--bg3);border:1px solid var(--accent);
+          border-radius:10px;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
           ${btnLabel}</button></div>`
       : '';
     return `<div class="day-card ${d.rest?'':'clickable'}" ${d.rest?'':'onclick="openDayFromProg('+S.week+','+i+')"'}>
