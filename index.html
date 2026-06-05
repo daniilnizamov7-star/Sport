@@ -866,25 +866,8 @@ async function tryAutoLogin() {
   const savedPass = localStorage.getItem('fc_user_pass');
   if (!savedId || !savedPhone || !savedPass) return false;
 
-  // Если программа уже в кеше — входим мгновенно без запроса к Supabase
-  const cachedProgram = localStorage.getItem('fc_user_program');
-  const cachedPK = localStorage.getItem('fc_user_program_key');
-  if (cachedProgram && cachedPK) {
-    // Восстанавливаем currentUser из кеша
-    currentUser = {
-      id: savedId,
-      phone: savedPhone,
-      name: localStorage.getItem('fc_user_name') || '',
-      program_key: JSON.parse(cachedPK)
-    };
-    USER_PROGRAM = JSON.parse(cachedProgram);
-    USER_PROGRAM_KEY = currentUser.program_key;
-    // Синхронизируем прогресс в фоне (не блокирует вход)
-    loadProgressFromSB().catch(()=>{});
-    return true;
-  }
-
-  // Кеша нет — идём в Supabase
+  // Пробуем Supabase — если недоступен, используем кеш
+  // Кеш нужен только для полного оффлайна (самолёт режим)
   try {
     const res = await sbFind('fc_users', {'phone': savedPhone, 'password': savedPass});
     if (res && res[0]) {
