@@ -713,7 +713,8 @@ function renderClientProgScreen(activeWeek) {
           style="width:100%;padding:8px;background:rgba(200,240,96,.08);border:1px solid rgba(200,240,96,.25);
           border-radius:10px;color:var(--acc);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--fb)">
           ${d.rest?'→ Пропустить':'✓ Уже выполнил'}</button></div>` : '';
-    return `<div class="day-card ${d.rest||isDone?'':'clickable'}" ${d.rest||isDone?'':('onclick="openClientDay('+absIdx+')"')}>
+    return `<div class="day-card ${isDone?'':'clickable'}" ${isDone?'':d.rest?'':'onclick="openClientDay('+absIdx+')\"'}>
+
       <div class="day-header">
         <div class="day-num ${nc}">${isDone?'✓':absIdx+1}</div>
         <div class="day-info"><div class="day-title">${d.t||'День '+(absIdx+1)}</div>
@@ -758,11 +759,13 @@ function markClientDayDone(absIdx) {
   refreshHome();
 }
 
-function enterApp() {
+async function enterApp() {
   document.getElementById('s-login').classList.add('hidden');
   document.getElementById('s-home').classList.remove('hidden');
   S.cur = 's-home';
   applyTheme();
+  // Ждём загрузки программы из Supabase ПЕРЕД отрисовкой карточек
+  await loadProgressFromSB();
   renderProgCards();
   checkAndRestore();
   initHome();
