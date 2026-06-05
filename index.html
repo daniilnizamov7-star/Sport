@@ -852,6 +852,12 @@ function doLogout() {
   document.getElementById('login-phone').value = '';
   document.getElementById('login-pass').value = '';
   document.getElementById('login-err').textContent = '';
+  // Сбрасываем кнопку входа — могла остаться disabled
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = 'Войти →'; }
+  // Скрываем нижнюю навигацию
+  const nav = document.getElementById('shell-nav');
+  if (nav) nav.style.display = 'none';
   S.cur = 's-login';
 }
 
