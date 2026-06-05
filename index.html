@@ -523,10 +523,11 @@ async function doLogin() {
     localStorage.setItem('fc_user_phone', phone);
     localStorage.setItem('fc_user_pass', pass);
     localStorage.setItem('fc_user_name', currentUser.name || '');
-    // Сохраняем program_key сразу при входе
+    // Сохраняем всё что нужно для оффлайн-входа
     if (currentUser.program_key) {
       localStorage.setItem('fc_user_program_key', JSON.stringify(currentUser.program_key));
     }
+    localStorage.setItem('fc_user_name', currentUser.name || '');
     // Загружаем прогресс из Supabase
     await loadProgressFromSB();
     enterApp();
@@ -864,6 +865,26 @@ async function tryAutoLogin() {
   const savedPhone = localStorage.getItem('fc_user_phone');
   const savedPass = localStorage.getItem('fc_user_pass');
   if (!savedId || !savedPhone || !savedPass) return false;
+
+  // Если программа уже в кеше — входим мгновенно без запроса к Supabase
+  const cachedProgram = localStorage.getItem('fc_user_program');
+  const cachedPK = localStorage.getItem('fc_user_program_key');
+  if (cachedProgram && cachedPK) {
+    // Восстанавливаем currentUser из кеша
+    currentUser = {
+      id: savedId,
+      phone: savedPhone,
+      name: localStorage.getItem('fc_user_name') || '',
+      program_key: JSON.parse(cachedPK)
+    };
+    USER_PROGRAM = JSON.parse(cachedProgram);
+    USER_PROGRAM_KEY = currentUser.program_key;
+    // Синхронизируем прогресс в фоне (не блокирует вход)
+    loadProgressFromSB().catch(()=>{});
+    return true;
+  }
+
+  // Кеша нет — идём в Supabase
   try {
     const res = await sbFind('fc_users', {'phone': savedPhone, 'password': savedPass});
     if (res && res[0]) {
@@ -872,17 +893,15 @@ async function tryAutoLogin() {
         localStorage.setItem('fc_user_program_key', JSON.stringify(currentUser.program_key));
       }
       await loadProgressFromSB();
-      return true; // успешный автологин
+      return true;
     } else {
-      // Пользователь не найден — чистим localStorage
       localStorage.removeItem('fc_user_id');
       localStorage.removeItem('fc_user_phone');
       localStorage.removeItem('fc_user_pass');
       return false;
     }
   } catch(e) {
-    // Оффлайн — входим с кешем если есть
-    if (localStorage.getItem('fc_user_id')) return true;
+    // Оффлайн без кеша — показываем экран входа
     return false;
   }
 }
