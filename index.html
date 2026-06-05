@@ -22,6 +22,18 @@
   --text: #f0f0f0;
   --text2: #9090a8;
   --text3: #5a5a72;
+}
+body.light {
+  --bg: #f4f4f8;
+  --bg2: #ffffff;
+  --bg3: #eaeaf0;
+  --bg4: #d8d8e4;
+  --accent: #4caf50;
+  --text: #1a1a2e;
+  --text2: #4a4a6a;
+  --text3: #8a8aaa;
+}
+:root {
   --r: 16px;
   /* Fallback если Google Fonts не загрузились */
   --font-head: 'Syne', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -252,6 +264,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <h1>FitCore</h1>
     <div style="display:flex;align-items:center;gap:10px">
       <div style="font-size:10px;color:var(--text3)">v0.4</div>
+      <button onclick="toggleTheme()" id="theme-btn" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--bg4)">🌙</button>
       <button onclick="doLogout()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:4px 8px;border-radius:8px;border:1px solid var(--bg4)">Выйти</button>
     </div>
   </div>
@@ -749,6 +762,7 @@ function enterApp() {
   document.getElementById('s-login').classList.add('hidden');
   document.getElementById('s-home').classList.remove('hidden');
   S.cur = 's-home';
+  applyTheme();
   renderProgCards();
   checkAndRestore();
   initHome();
@@ -765,6 +779,25 @@ function startBackBlock() {
   document.getElementById('s-complete').classList.add('hidden');
   S.stack = S.stack.filter(s => s !== 's-complete');
   openDay(backDay, 'Блок спины и осанки →');
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  localStorage.setItem('fc_theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-btn').textContent = isLight ? '☀️' : '🌙';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = isLight ? '#f4f4f8' : '#0d0d12';
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('fc_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.textContent = '☀️';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = '#f4f4f8';
+  }
 }
 
 function doLogout() {
