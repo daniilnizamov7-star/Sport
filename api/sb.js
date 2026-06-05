@@ -8,25 +8,25 @@ export default async function handler(req) {
   const path = url.searchParams.get('path') || '';
   const target = `${SB_URL}/rest/v1/${path}`;
 
+  const prefer = req.headers.get('Prefer') || '';
   const headers = {
     'Content-Type': 'application/json',
     'apikey': SB_KEY,
     'Authorization': `Bearer ${SB_KEY}`,
-    'Prefer': req.headers.get('Prefer') || '',
   };
+  if (prefer) headers['Prefer'] = prefer;
 
-  const res = await fetch(target, {
-    method: req.method,
-    headers,
-    body: req.method !== 'GET' ? await req.text() : undefined,
-  });
+  const body = req.method !== 'GET' ? await req.text() : undefined;
 
+  const res = await fetch(target, { method: req.method, headers, body });
   const data = await res.text();
+
   return new Response(data, {
     status: res.status,
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE',
     }
   });
 }
