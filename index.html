@@ -1955,7 +1955,15 @@ function nextStep() {
   if (e && e.bilateral && e.isTime && S.awSide === 'B') {
     stopTimer();
     S.awSide = 'A';
-    // Дальше логика как обычно — подход завершён
+    // Переходим к следующему подходу или упражнению
+    if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
+    // Все подходы завершены — следующее упражнение
+    S.awIdx++; S.awSet=1;
+    if (S.awIdx >= S.awEx.length) { finishActive(); return; }
+    S.awIsRest=true;
+    S.awPreview=true;
+    renderStep();
+    return;
   }
   if (S.awIsRest) {
     S.awIsRest=false;
