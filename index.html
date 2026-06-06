@@ -1418,7 +1418,7 @@ let S = {
   prog: 'combined',
   week: 0,
   activeEx: [],
-  awEx: [], awIdx: 0, awSet: 1, awIsRest: false,
+  awEx: [], awIdx: 0, awSet: 1, awIsRest: false, awPreview: false, // preview=ознакомление с упражнением
   awTimer: null, awSec: 0,
   workoutDone: false,
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
@@ -1750,7 +1750,7 @@ function openEx(key) {
 // ======= ACTIVE WORKOUT =======
 function startActive() {
   S.awEx = S.activeEx.map(k=>EX[k]);
-  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.workoutDone=false;
+  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.awPreview=true; S.workoutDone=false;
   push('s-active');
   showNav(false); // прячем нав во время тренировки
   renderStep();
@@ -1758,12 +1758,35 @@ function startActive() {
 
 function renderStep() {
   const e = S.awEx[S.awIdx];
-  if (!e) { finishActive(); return; }  // защита от выхода за границу
+  if (!e) { finishActive(); return; }
   document.getElementById('aw-counter').textContent = `Упражнение ${S.awIdx+1} из ${S.awEx.length}`;
   document.getElementById('aw-name').textContent = S.awIsRest ? '⏸ Отдых' : e.name;
   document.getElementById('aw-set').textContent = S.awSet;
   document.getElementById('aw-sets').textContent = e.sets;
   document.getElementById('aw-reps').textContent = e.isTime ? `${S.awIsRest?20:e.dur} сек` : (S.awIsRest?'20 сек':`${e.reps} повт`);
+
+  // Прогресс-точки
+  document.getElementById('aw-dots').innerHTML = S.awEx.map((_,i)=>
+    `<div class="aw-dot ${i<S.awIdx?'done':i===S.awIdx?'current':''}"></div>`).join('');
+
+  const btnNext = document.getElementById('btn-next');
+  const btnSkip = document.getElementById('btn-skip');
+  stopTimer();
+
+  // РЕЖИМ ПРЕВЬЮ — ознакомление с новым упражнением
+  if (S.awPreview && !S.awIsRest) {
+    const stepsText = e.steps.map((s,i) => `${i+1}. ${s.t.replace(/<[^>]+>/g,'')}`).join('<br>');
+    const mistakesText = e.mistakes ? '<br>⚠️ ' + e.mistakes[0] : '';
+    document.getElementById('aw-hint').innerHTML = `<strong>Как делать:</strong><br>${stepsText}${mistakesText}`;
+    document.getElementById('t-num').textContent = '📖';
+    document.getElementById('t-lbl').textContent = 'Ознакомься';
+    document.getElementById('t-circle').style.strokeDashoffset = '515';
+    btnNext.textContent = 'Готов → Начать';
+    btnNext.disabled = false;
+    btnSkip.style.display = 'none';
+    return;
+  }
+
   const checks = {
     vacuum: "Рука на низу живота — он должен быть твёрдым",
     deadbug: "Ладонь под поясницей — не должна выниматься",
@@ -1772,22 +1795,16 @@ function renderStep() {
     hollowBody: "Рука под поясницей — зазора нет?",
     breathingTVA: "Рука на животе: вниз на выдохе, вверх на вдохе"
   };
+
   let hintText = S.awIsRest
     ? 'Дышите спокойно. Живот расслаблен.'
     : e.steps.map((s,i) => `${i+1}. ${s.t.replace(/<[^>]+>/g,'')}`).join('<br>');
   if (!S.awIsRest && e.zone==='lower') hintText += '<br>🔑 Поясница прижата — это главное';
   if (!S.awIsRest) {
-    const exKey = S.activeEx[S.awIdx];
+    const exKey = S.activeEx?.[S.awIdx];
     if (exKey && checks[exKey]) hintText += '<br>✅ ' + checks[exKey];
   }
   document.getElementById('aw-hint').innerHTML = hintText;
-
-  // Прогресс-точки
-  document.getElementById('aw-dots').innerHTML = S.awEx.map((_,i)=>
-    `<div class="aw-dot ${i<S.awIdx?'done':i===S.awIdx?'current':''}"></div>`).join('');
-
-  const btnNext = document.getElementById('btn-next');
-  const btnSkip = document.getElementById('btn-skip');
 
   if (S.awIsRest) {
     btnNext.textContent = 'Начать подход ›';
@@ -1803,7 +1820,6 @@ function renderStep() {
     btnNext.textContent = 'Готово ✓';
     btnNext.disabled = false;
     btnSkip.style.display = 'none';
-    stopTimer();
     document.getElementById('t-num').textContent = e.reps;
     document.getElementById('t-lbl').textContent = 'повторений';
     document.getElementById('t-circle').style.strokeDashoffset = '0';
@@ -1858,11 +1874,11 @@ function stopTimer() { if (S.awTimer) { clearInterval(S.awTimer); S.awTimer=null
     // Только горизонтальный свайп (не вертикальный скролл)
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
     if (dx < 0) {
-      // Свайп влево — вперёд (как кнопка Готово)
+      // Свайп влево — вперёд
       nextStep();
     } else {
-      // Свайп вправо — назад (отменить последний шаг)
-      prevStep();
+      // Свайп вправо — назад (не работает на превью)
+      if (!S.awPreview) prevStep();
     }
   }, {passive:true});
 })();
@@ -1894,13 +1910,25 @@ function skipRest() {
 function nextStep() {
   const e = S.awEx[S.awIdx];
   stopTimer();
-  if (S.awIsRest) { S.awIsRest=false; renderStep(); return; }
+  // Если был превью — запускаем упражнение
+  if (S.awPreview && !S.awIsRest) {
+    S.awPreview = false;
+    renderStep();
+    return;
+  }
+  if (S.awIsRest) {
+    S.awIsRest=false;
+    S.awPreview=true; // показываем превью перед каждым упражнением
+    renderStep();
+    return;
+  }
   // Ещё подходы?
   if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
-  // Следующее упражнение
+  // Следующее упражнение — сначала отдых, потом превью нового упражнения
   S.awIdx++; S.awSet=1;
   if (S.awIdx >= S.awEx.length) { finishActive(); return; }
   S.awIsRest=true;
+  S.awPreview=true; // после отдыха показываем превью нового упражнения
   renderStep();
 }
 
