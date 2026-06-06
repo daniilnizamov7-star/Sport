@@ -1940,9 +1940,18 @@ function nextStep() {
     renderStep();
     return;
   }
-  // Bilateral: если сторона A — переключаем на B (свайп или кнопка)
+  // ОТДЫХ — проверяем первым, до bilateral
+  if (S.awIsRest) {
+    S.awIsRest=false;
+    S.awSide='A';
+    // awPreview сохраняем если он был true (переход к новому упражнению)
+    // awPreview=false если это отдых между подходами одного упражнения
+    // awPreview уже установлен правильно при создании отдыха
+    renderStep();
+    return;
+  }
+  // Bilateral isTime: сторона A → переключаем на B
   if (e && e.bilateral && e.isTime && S.awSide === 'A') {
-    stopTimer();
     S.awSide = 'B';
     const btn = document.getElementById('btn-next');
     if (btn) { btn.textContent = '⏳ Правая сторона'; btn.disabled = true; }
@@ -1951,13 +1960,10 @@ function nextStep() {
     startTimer(e.dur, false);
     return;
   }
-  // Bilateral: если сторона B — завершаем подход (идём на отдых)
+  // Bilateral isTime: сторона B → завершаем подход
   if (e && e.bilateral && e.isTime && S.awSide === 'B') {
-    stopTimer();
     S.awSide = 'A';
-    // Переходим к следующему подходу или упражнению
     if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
-    // Все подходы завершены — следующее упражнение
     S.awIdx++; S.awSet=1;
     if (S.awIdx >= S.awEx.length) { finishActive(); return; }
     S.awIsRest=true;
@@ -1965,21 +1971,14 @@ function nextStep() {
     renderStep();
     return;
   }
-  if (S.awIsRest) {
-    S.awIsRest=false;
-    S.awSide='A';
-    S.awPreview=true; // показываем превью перед каждым упражнением
-    renderStep();
-    return;
-  }
   // Ещё подходы?
-  S.awSide = 'A'; // сбрасываем сторону для следующего подхода
+  S.awSide = 'A';
   if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
-  // Следующее упражнение — сначала отдых, потом превью нового упражнения
+  // Все подходы завершены — следующее упражнение с отдыхом и превью
   S.awIdx++; S.awSet=1;
   if (S.awIdx >= S.awEx.length) { finishActive(); return; }
   S.awIsRest=true;
-  S.awPreview=true; // после отдыха показываем превью нового упражнения
+  S.awPreview=true; // превью ТОЛЬКО при переходе к новому упражнению
   renderStep();
 }
 
