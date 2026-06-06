@@ -1774,7 +1774,7 @@ function renderStep() {
   };
   let hintText = S.awIsRest
     ? 'Дышите спокойно. Живот расслаблен.'
-    : e.steps[0].t.replace(/<[^>]+>/g,'');
+    : e.steps.map((s,i) => `${i+1}. ${s.t.replace(/<[^>]+>/g,'')}`).join('<br>');
   if (!S.awIsRest && e.zone==='lower') hintText += '<br>🔑 Поясница прижата — это главное';
   if (!S.awIsRest) {
     const exKey = S.activeEx[S.awIdx];
@@ -1795,8 +1795,8 @@ function renderStep() {
     btnSkip.style.display = 'block';
     startTimer(20, true);
   } else if (e.isTime) {
-    btnNext.textContent = '⏩ Пропустить';
-    btnNext.disabled = false;
+    btnNext.textContent = '⏳ Идёт...';
+    btnNext.disabled = true;
     btnSkip.style.display = 'none';
     startTimer(e.dur, false);
   } else {
@@ -1820,8 +1820,15 @@ function startTimer(sec, autoNext) {
     updateTimer(S.awSec, total);
     if (S.awSec <= 0) {
       stopTimer();
-      if (autoNext) { S.awIsRest=false; renderStep(); }
-      // для isTime — просто разблокируем кнопку, уже разблокирована
+      if (autoNext) {
+        S.awIsRest=false; renderStep();
+      } else {
+        // Таймер упражнения закончился — показываем "Готово ✓"
+        const btn = document.getElementById('btn-next');
+        if (btn) { btn.textContent = 'Готово ✓'; btn.disabled = false; }
+        document.getElementById('t-num').textContent = '✓';
+        document.getElementById('t-lbl').textContent = 'Готово!';
+      }
     }
   },1000);
 }
@@ -1834,6 +1841,48 @@ function updateTimer(cur, total) {
 }
 
 function stopTimer() { if (S.awTimer) { clearInterval(S.awTimer); S.awTimer=null; } }
+
+// Свайп на экране тренировки
+(function() {
+  let touchStartX = 0, touchStartY = 0;
+  document.addEventListener('touchstart', e => {
+    if (!document.getElementById('s-active').classList.contains('hidden')) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }
+  }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (document.getElementById('s-active').classList.contains('hidden')) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Только горизонтальный свайп (не вертикальный скролл)
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+    if (dx < 0) {
+      // Свайп влево — вперёд (как кнопка Готово)
+      nextStep();
+    } else {
+      // Свайп вправо — назад (отменить последний шаг)
+      prevStep();
+    }
+  }, {passive:true});
+})();
+
+function prevStep() {
+  // Назад: если был отдых — вернуться к упражнению, если упражнение — вернуться к пред. упражнению
+  stopTimer();
+  if (S.awIsRest) {
+    // Отмена перехода к отдыху — вернуться к текущему упражнению
+    S.awIsRest = false;
+    if (S.awSet > 1) S.awSet--;
+    renderStep();
+  } else if (S.awIdx > 0) {
+    // Вернуться к предыдущему упражнению
+    S.awIdx--;
+    S.awSet = S.awEx[S.awIdx]?.sets || 1;
+    S.awIsRest = false;
+    renderStep();
+  }
+}
 
 function skipRest() {
   if (!S.awIsRest) return;
