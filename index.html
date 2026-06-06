@@ -1940,13 +1940,22 @@ function nextStep() {
     renderStep();
     return;
   }
-  // Если bilateral и нажали "Другая сторона" — запускаем таймер B
-  if (e && e.bilateral && e.isTime && S.awSide === 'B') {
+  // Bilateral: если сторона A — переключаем на B (свайп или кнопка)
+  if (e && e.bilateral && e.isTime && S.awSide === 'A') {
+    stopTimer();
+    S.awSide = 'B';
     const btn = document.getElementById('btn-next');
     if (btn) { btn.textContent = '⏳ Правая сторона'; btn.disabled = true; }
+    document.getElementById('t-num').textContent = e.dur;
     document.getElementById('t-lbl').textContent = 'сек — правая';
     startTimer(e.dur, false);
     return;
+  }
+  // Bilateral: если сторона B — завершаем подход (идём на отдых)
+  if (e && e.bilateral && e.isTime && S.awSide === 'B') {
+    stopTimer();
+    S.awSide = 'A';
+    // Дальше логика как обычно — подход завершён
   }
   if (S.awIsRest) {
     S.awIsRest=false;
