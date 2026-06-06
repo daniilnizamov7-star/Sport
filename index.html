@@ -1423,7 +1423,7 @@ let S = {
   prog: 'combined',
   week: 0,
   activeEx: [],
-  awEx: [], awIdx: 0, awSet: 1, awIsRest: false, awPreview: false, // preview=ознакомление с упражнением
+  awEx: [], awIdx: 0, awSet: 1, awIsRest: false, awPreview: false, awSide: 'A', // preview=ознакомление, side=A/B для bilateral
   awTimer: null, awSec: 0,
   workoutDone: false,
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
@@ -1755,7 +1755,7 @@ function openEx(key) {
 // ======= ACTIVE WORKOUT =======
 function startActive() {
   S.awEx = S.activeEx.map(k=>EX[k]);
-  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.awPreview=true; S.workoutDone=false;
+  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.awPreview=true; S.awSide='A'; S.workoutDone=false;
   push('s-active');
   showNav(false); // прячем нав во время тренировки
   renderStep();
@@ -1778,8 +1778,8 @@ function renderStep() {
   const btnSkip = document.getElementById('btn-skip');
   stopTimer();
 
-  // РЕЖИМ ПРЕВЬЮ — ознакомление с новым упражнением
-  if (S.awPreview && !S.awIsRest) {
+  // РЕЖИМ ПРЕВЬЮ — только при первом подходе нового упражнения
+  if (S.awPreview && !S.awIsRest && S.awSet === 1) {
     const stepsText = e.steps.map((s,i) => `${i+1}. ${s.t.replace(/<[^>]+>/g,'')}`).join('<br>');
     const mistakesText = e.mistakes ? '<br>⚠️ ' + e.mistakes[0] : '';
     const bilateralNote = e.bilateral ? '<br><br>👈👉 <strong>Двустороннее</strong> — выполняй каждой стороной поочерёдно' : '';
@@ -1818,10 +1818,17 @@ function renderStep() {
     btnSkip.style.display = 'block';
     startTimer(20, true);
   } else if (e.isTime) {
-    btnNext.textContent = '⏳ Идёт...';
     btnNext.disabled = true;
     btnSkip.style.display = 'none';
-    document.getElementById('t-lbl').textContent = e.bilateral ? 'сек (одна сторона)' : 'секунд';
+    if (e.bilateral) {
+      // Двустороннее: сначала сторона A, потом B
+      const sideLabel = S.awSide === 'A' ? '👈 Левая сторона' : '👉 Правая сторона';
+      btnNext.textContent = '⏳ ' + sideLabel;
+      document.getElementById('t-lbl').textContent = S.awSide === 'A' ? 'сек — левая' : 'сек — правая';
+    } else {
+      btnNext.textContent = '⏳ Идёт...';
+      document.getElementById('t-lbl').textContent = 'секунд';
+    }
     startTimer(e.dur, false);
   } else {
     btnNext.textContent = 'Готово ✓';
@@ -1846,11 +1853,20 @@ function startTimer(sec, autoNext) {
       if (autoNext) {
         S.awIsRest=false; renderStep();
       } else {
-        // Таймер упражнения закончился — показываем "Готово ✓"
+        const e2 = S.awEx[S.awIdx];
         const btn = document.getElementById('btn-next');
-        if (btn) { btn.textContent = 'Готово ✓'; btn.disabled = false; }
-        document.getElementById('t-num').textContent = '✓';
-        document.getElementById('t-lbl').textContent = 'Готово!';
+        if (e2 && e2.bilateral && S.awSide === 'A') {
+          // Переключаем на сторону B
+          S.awSide = 'B';
+          if (btn) { btn.textContent = '👉 Другая сторона →'; btn.disabled = false; }
+          document.getElementById('t-num').textContent = '✓';
+          document.getElementById('t-lbl').textContent = 'Теперь другая!';
+        } else {
+          // Обычное или сторона B — завершено
+          if (btn) { btn.textContent = 'Готово ✓'; btn.disabled = false; }
+          document.getElementById('t-num').textContent = '✓';
+          document.getElementById('t-lbl').textContent = 'Готово!';
+        }
       }
     }
   },1000);
@@ -1920,16 +1936,27 @@ function nextStep() {
   // Если был превью — запускаем упражнение
   if (S.awPreview && !S.awIsRest) {
     S.awPreview = false;
+    S.awSide = 'A';
     renderStep();
+    return;
+  }
+  // Если bilateral и нажали "Другая сторона" — запускаем таймер B
+  if (e && e.bilateral && e.isTime && S.awSide === 'B') {
+    const btn = document.getElementById('btn-next');
+    if (btn) { btn.textContent = '⏳ Правая сторона'; btn.disabled = true; }
+    document.getElementById('t-lbl').textContent = 'сек — правая';
+    startTimer(e.dur, false);
     return;
   }
   if (S.awIsRest) {
     S.awIsRest=false;
+    S.awSide='A';
     S.awPreview=true; // показываем превью перед каждым упражнением
     renderStep();
     return;
   }
   // Ещё подходы?
+  S.awSide = 'A'; // сбрасываем сторону для следующего подхода
   if (S.awSet < e.sets) { S.awSet++; S.awIsRest=true; renderStep(); return; }
   // Следующее упражнение — сначала отдых, потом превью нового упражнения
   S.awIdx++; S.awSet=1;
