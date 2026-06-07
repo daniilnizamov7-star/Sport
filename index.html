@@ -1588,7 +1588,12 @@ function initHome() {
 
 function refreshHome() {
   const streak = calcStreak();
-  const totalWorkouts = S.completed.filter(d => !String(d).startsWith('done_')).length + S.completedCombined.length;
+  // Считаем только тренировочные дни (без дней отдыха)
+  const allDays = getActiveDays();
+  const totalWorkouts = S.completedCombined.filter(idx => {
+    const day = allDays[idx];
+    return day && !day.rest;
+  }).length;
   document.getElementById('streak-txt').innerHTML = `${streak} ${plurDays(streak)} подряд &nbsp;<span style="font-size:11px;color:var(--text3);font-weight:400">· ${totalWorkouts} тренировок</span>`;
   const total = S.completedCombined.length;
   const dayIdx = total % getActiveDays().length;
