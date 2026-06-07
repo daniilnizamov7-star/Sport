@@ -1423,7 +1423,7 @@ let S = {
   prog: 'combined',
   week: 0,
   activeEx: [],
-  awEx: [], awIdx: 0, awSet: 1, awIsRest: false, awPreview: false, awSide: 'A', // preview=ознакомление, side=A/B для bilateral
+  awEx: [], awIdx: 0, awSet: 1, awIsRest: false, awPreview: false, awSide: 'A', awWaitSideB: false, // preview=ознакомление, side=A/B, waitSideB=ждём нажатия для B
   awTimer: null, awSec: 0,
   workoutDone: false,
   completed: JSON.parse(localStorage.getItem('fc_done') || '[]'),
@@ -1588,7 +1588,8 @@ function initHome() {
 
 function refreshHome() {
   const streak = calcStreak();
-  document.getElementById('streak-txt').textContent = `${streak} ${plurDays(streak)} подряд`;
+  const totalWorkouts = S.completed.filter(d => !String(d).startsWith('done_')).length + S.completedCombined.length;
+  document.getElementById('streak-txt').innerHTML = `${streak} ${plurDays(streak)} подряд &nbsp;<span style="font-size:11px;color:var(--text3);font-weight:400">· ${totalWorkouts} тренировок</span>`;
   const total = S.completedCombined.length;
   const dayIdx = total % getActiveDays().length;
   const day = getActiveDays()[dayIdx];
@@ -1755,7 +1756,7 @@ function openEx(key) {
 // ======= ACTIVE WORKOUT =======
 function startActive() {
   S.awEx = S.activeEx.map(k=>EX[k]);
-  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.awPreview=true; S.awSide='A'; S.workoutDone=false;
+  S.awIdx=0; S.awSet=1; S.awIsRest=false; S.awPreview=true; S.awSide='A'; S.awWaitSideB=false; S.workoutDone=false;
   push('s-active');
   showNav(false); // прячем нав во время тренировки
   renderStep();
@@ -1856,8 +1857,8 @@ function startTimer(sec, autoNext) {
         const e2 = S.awEx[S.awIdx];
         const btn = document.getElementById('btn-next');
         if (e2 && e2.bilateral && S.awSide === 'A') {
-          // Переключаем на сторону B
-          S.awSide = 'B';
+          // Таймер A закончился — ждём нажатия кнопки для запуска B
+          S.awWaitSideB = true; // флаг: следующее нажатие = запуск таймера B
           if (btn) { btn.textContent = '👉 Другая сторона →'; btn.disabled = false; }
           document.getElementById('t-num').textContent = '✓';
           document.getElementById('t-lbl').textContent = 'Теперь другая!';
@@ -1943,15 +1944,27 @@ function nextStep() {
   // ОТДЫХ — проверяем первым, до bilateral
   if (S.awIsRest) {
     S.awIsRest=false;
-    S.awSide='A';
+    S.awSide='A'; S.awWaitSideB=false;
     // awPreview сохраняем если он был true (переход к новому упражнению)
     // awPreview=false если это отдых между подходами одного упражнения
     // awPreview уже установлен правильно при создании отдыха
     renderStep();
     return;
   }
-  // Bilateral isTime: сторона A → переключаем на B
+  // Bilateral isTime: нажали "Другая сторона" после таймера A
+  if (e && e.bilateral && e.isTime && S.awWaitSideB) {
+    S.awWaitSideB = false;
+    S.awSide = 'B';
+    const btn = document.getElementById('btn-next');
+    if (btn) { btn.textContent = '⏳ Правая сторона'; btn.disabled = true; }
+    document.getElementById('t-num').textContent = e.dur;
+    document.getElementById('t-lbl').textContent = 'сек — правая';
+    startTimer(e.dur, false);
+    return;
+  }
+  // Bilateral isTime: свайп влево на стороне A (таймер ещё идёт) → переключаем на B
   if (e && e.bilateral && e.isTime && S.awSide === 'A') {
+    S.awWaitSideB = false;
     S.awSide = 'B';
     const btn = document.getElementById('btn-next');
     if (btn) { btn.textContent = '⏳ Правая сторона'; btn.disabled = true; }
